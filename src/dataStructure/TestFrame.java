@@ -17,7 +17,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 public class TestFrame{
 	
-	private static final boolean DEBUG_MODE = false;
+	private static boolean DEBUG_MODE = true;
 	
 	//per il calcolo della distanza
 	private String service;
@@ -42,6 +42,7 @@ public class TestFrame{
 	private String url;
 	private String selPayload;
 	private int responseCode;
+	private long responseTime;
 	private StringBuffer response;
 	
 
@@ -49,28 +50,30 @@ public class TestFrame{
 
 	private String finalToken;
 
-	public TestFrame() {
+	public TestFrame(boolean debug) {
 		super();
 		//testCases = new ArrayList<TestCase>();
 		finalToken="";
 	}
 
-	public TestFrame(String _name, String _tfID, String _reqType, String _payload) {
+	public TestFrame(String _name, String _tfID, String _reqType, String _payload, boolean debug) {
 		super();
 		this.name = _name;
 		this.tfID = _tfID;
 		this.reqType = _reqType;
 		this.payload= _payload;
 		finalToken="";
+		DEBUG_MODE= debug;
 	}
 
-	public TestFrame(String _name, String _tfID, double _failureProb, double _occurrenceProb) {
+	public TestFrame(String _name, String _tfID, double _failureProb, double _occurrenceProb, boolean debug) {
 		super();
 		this.name = _name;
 		this.tfID = _tfID;
 		this.failureProb = _failureProb;
 		this.occurrenceProb = _occurrenceProb;
 		finalToken="";
+		DEBUG_MODE= debug;
 	}
 
 
@@ -84,7 +87,7 @@ public class TestFrame{
 		finalToken="";
 	}*/
 
-	public TestFrame(String _service, String _name, String _tfID, String _reqType, double _failureProb, double _occurrenceProb, String _payload) {
+	public TestFrame(String _service, String _name, String _tfID, String _reqType, double _failureProb, double _occurrenceProb, String _payload, boolean debug) {
 		super();
 		this.service = _service;
 		this.name = _name;
@@ -94,11 +97,13 @@ public class TestFrame{
 		this.occurrenceProb = _occurrenceProb;
 		this.payload = _payload;
 		finalToken="";
+		DEBUG_MODE= debug;
 	}
 
 	// HTTP GET request
 	private void sendGet() throws Exception {
 		URL obj = new URL(url);
+		long start = System.currentTimeMillis();
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 		
 		if(DEBUG_MODE) 
@@ -112,21 +117,22 @@ public class TestFrame{
 
 			con.setConnectTimeout(time);
 			con.setReadTimeout((time));
-
+			 
 			responseCode = con.getResponseCode();
-			if(DEBUG_MODE) 
-			System.out.println("[DEBUG] GET response: "+ responseCode);
-
-			BufferedReader in = new BufferedReader(
-					new InputStreamReader(con.getInputStream()));
-			String inputLine;
-			response = new StringBuffer();
-
-			while ((inputLine = in.readLine()) != null) {
-				response.append(inputLine);
-			}
-			in.close();
+			responseTime = System.currentTimeMillis() - start;
 			
+			//if(DEBUG_MODE) 
+			//System.out.println("[DEBUG] GET response: "+ responseCode);
+			if(responseCode < 300){
+				BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+				String inputLine;
+				response = new StringBuffer();
+	
+				while ((inputLine = in.readLine()) != null) {
+					response.append(inputLine);
+				}
+				in.close();
+			}
 			
 			//print result
 			//		System.out.println(response.toString());
@@ -142,7 +148,9 @@ public class TestFrame{
 	private void sendPost() throws Exception {
 
 		URL obj = new URL(url);
+		long start = System.currentTimeMillis(); 
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+		
 		if(DEBUG_MODE) 
 		System.out.println("[DEBUG] POST");
 		
@@ -161,9 +169,12 @@ public class TestFrame{
 			wr.write(this.selPayload);
 			wr.flush();
 
+			
 			responseCode = con.getResponseCode();
-			if(DEBUG_MODE) 
-			System.out.println("[DEBUG] POST response: "+ responseCode);
+			responseTime = System.currentTimeMillis() - start;
+			
+			//if(DEBUG_MODE) 
+			//System.out.println("[DEBUG] POST response: "+ responseCode);
 			
 			if(responseCode < 300){
 				BufferedReader in = new BufferedReader(
@@ -191,6 +202,7 @@ public class TestFrame{
 	private void sendPut() throws Exception {
 		responseCode = 0;
 		URL obj = new URL(url);
+		long start = System.currentTimeMillis(); 
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 		
 		if(DEBUG_MODE) 
@@ -212,55 +224,108 @@ public class TestFrame{
 			wr.flush();
 
 			responseCode = con.getResponseCode();
-			if(DEBUG_MODE) 
-			System.out.println("[DEBUG] PUT response: "+ responseCode);
-			
-			BufferedReader in = new BufferedReader(
-					new InputStreamReader(con.getInputStream()));
-			String inputLine;
-			response = new StringBuffer();
-
-			while ((inputLine = in.readLine()) != null) {
-				response.append(inputLine);
+			responseTime = System.currentTimeMillis() - start;
+			//if(DEBUG_MODE) 
+			//System.out.println("[DEBUG] PUT response: "+ responseCode);
+			if(responseCode < 300){
+				BufferedReader in = new BufferedReader(
+						new InputStreamReader(con.getInputStream()));
+				String inputLine;
+				response = new StringBuffer();
+	
+				while ((inputLine = in.readLine()) != null) {
+					response.append(inputLine);
+				}
+				in.close();
 			}
-			in.close();
-			
-			
-
-			//print result
-			//		System.out.println(response.toString());
 		} finally {
 			if (con != null) {
 				con.disconnect();
 			}
 		}
-
 	}
 
+	// HTTP DELETE request
+	private void sendDelete() throws Exception {
+		URL obj = new URL(url);
+		long start = System.currentTimeMillis(); 
+		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+		
+		if(DEBUG_MODE) 
+		System.out.println("[DEBUG] DELETE");
 
-	/*public void addTestCase(String name, String tcID){
-		TestCase tc = new TestCase(name, tcID);
-		testCases.add(tc);
-	}*/
+		try {
+			con.setRequestMethod("DELETE");
 
-	/****************Experimental Version*********************/	
-	//	private static Scanner scan = new Scanner(System.in);
+			con.setRequestProperty("Content-Type", "application/json");
+			con.setRequestProperty("Authorization", "Bearer " + finalToken);
 
-	public double expExtractAndExecuteTestCase(){
-		int failedTC = 0;
+			con.setConnectTimeout(time);
+			con.setReadTimeout((time));
 
-		for(int i=0; i<30; i++){
-			if(extractAndExecuteTestCase())
-				failedTC++;
+			responseCode = con.getResponseCode();
+			responseTime = System.currentTimeMillis() - start;			
+			//if(DEBUG_MODE) 
+			//System.out.println("[DEBUG] GET response: "+ responseCode);
+			if(responseCode < 300){
+				BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+				String inputLine;
+				response = new StringBuffer();
+	
+				while ((inputLine = in.readLine()) != null) {
+					response.append(inputLine);
+				}
+				in.close();
+			}
+
+		} finally {
+			if (con != null) {
+				con.disconnect();
+			}
 		}
-
-		System.out.println("There are "+failedTC+" on 30 Test Cases executed");
-
-		//		System.out.println("Press ENTER to continue");
-		//		scan.nextLine();
-
-		return failedTC/(double)30;
 	}
+
+	private void sendHead() throws Exception {
+		URL obj = new URL(url);
+		long start = System.currentTimeMillis(); 
+		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+		
+		if(DEBUG_MODE) 
+		System.out.println("[DEBUG] HEAD");
+
+		try {
+			con.setRequestMethod("HEAD");
+
+			con.setRequestProperty("Content-Type", "application/json");
+			con.setRequestProperty("Authorization", "Bearer " + finalToken);
+
+			con.setConnectTimeout(time);
+			con.setReadTimeout((time));
+
+			responseCode = con.getResponseCode();
+			responseTime = System.currentTimeMillis() - start;
+			
+			//if(DEBUG_MODE) 
+			//System.out.println("[DEBUG] GET response: "+ responseCode);
+			if(responseCode < 300){
+				BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+				String inputLine;
+				response = new StringBuffer();
+	
+				while ((inputLine = in.readLine()) != null) {
+					response.append(inputLine);
+				}
+				in.close();
+			}
+
+		} finally {
+			if (con != null) {
+				con.disconnect();
+			}
+		}
+	}
+
+
 	/**************************************/
 
 	//	Metodo per l'esecuzione di un caso di Test estratto dal Test Frame
@@ -276,6 +341,12 @@ public class TestFrame{
 		if(url.contains("{")||selPayload.contains("{")){
 			this.selectTC();
 		}
+		
+		if(DEBUG_MODE) {
+			System.out.println("\n----------------------------------------\n[DEBUG] url: "+ url);
+			if(selPayload != "null")
+			System.out.println("[DEBUG] payload: "+ selPayload);
+		}
 
 //		System.out.println(this.tfID+") "+this.reqType+" "+this.url);
 		//		System.out.println("Payload: "+this.selPayload);
@@ -286,82 +357,61 @@ public class TestFrame{
 				this.sendGet();
 			} else if(this.reqType.equals("POST")||this.reqType.equals("post")){
 				this.sendPost();
-			} else{
+			} else if(this.reqType.equals("DELETE")||this.reqType.equals("delete")){
+				this.sendDelete();
+			} else if(this.reqType.equals("PUT")||this.reqType.equals("put")){
 				this.sendPut();
+			} else if(this.reqType.equals("HEAD")||this.reqType.equals("head")){
+				this.sendHead();
+			}  else {
+				System.out.println("\n[ERROR] Metodo non implementato: " + this.reqType);
+				return false;
 			}
 
 		} catch(java.net.SocketTimeoutException e){
-//			Toolkit.getDefaultToolkit().beep();
-
-			//			System.out.println("Press ENTER to continue");
-			//			scan.nextLine();
-			if(DEBUG_MODE) 
-			System.out.println("[DEBUG] Risposta (exc): "+ responseCode);
-
-			return false;
-			//return true;
-		} catch (Exception e) {
-			if(responseCode == 0){
-				//				Toolkit.getDefaultToolkit().beep();
-				//
-				//				System.out.println("[0] Press ENTER to continue");
-				//				scan.nextLine();
-				if(DEBUG_MODE) 
-				System.out.println("[DEBUG] Risposta (0): "+ responseCode);
+			if(DEBUG_MODE) {
+				System.out.println("[DEBUG] Exception risposta (timeout): "+ responseCode);
 				System.out.println(e);
-				return false;
-			} else if(responseCode >= 500){
-				//				/**********************/
-				//				try {
-				//					Thread.sleep(1000);
-				//				} catch (InterruptedException e1) {
-				//					// TODO Auto-generated catch block
-				//					e1.printStackTrace();
-				//				}
-				//				/***********************/
+			}
+			return false;
+			
+		} catch (Exception e) {
+			if(DEBUG_MODE) 
+			System.out.println(e);
+			
+			boolean returnValue = false; 
+			for(int i = 0; i < expectedResponses.size(); i++) {
+				if(responseCode == expectedResponses.get(i))
+					returnValue = true;
+			}
+			
+			if(returnValue){
 				if(DEBUG_MODE) 
-				System.out.println("[DEBUG] Risposta (>500): "+ responseCode);
-				return true;
+				System.out.println("[DEBUG] ExceptionHandler Risposta attesa: "+ responseCode);			
 			} else{
-				return false;
+				if(DEBUG_MODE) 
+				System.out.println("[DEBUG] ExceptionHandler Risposta non attesa: "+ responseCode);
+			}
+			return returnValue;
+		}
+		
+		boolean returnValue = false; 
+		for(int i = 0; i < expectedResponses.size(); i++) {
+			if(responseCode == expectedResponses.get(i))
+				returnValue = true;
+		}
+		
+		if(DEBUG_MODE) {
+			if(returnValue) {
+				System.out.println("[DEBUG] Ricevuta risposta attesa: "+ responseCode);
+			}else {
+				System.out.println("[DEBUG] Ricevuta risposta non attesa: "+ responseCode);
 			}
 		}
-
-		if(responseCode >= 500){
-			/**********************/
-			//			try {
-			//				Thread.sleep(1000);
-			//			} catch (InterruptedException e1) {
-			//				// TODO Auto-generated catch block
-			//				e1.printStackTrace();
-			//			}
-			/***********************/
-			return true;
-		} else{
-			return false;
-		}
-
+		return returnValue;
 	}
 
 
-
-	//	Metodo di prova usato in simulazione
-	//	private boolean extractAndExecuteTestCaseDummy(){
-	//		double rand = Math.random();
-	//		if (rand <= this.failureProb && this.failureProb!=0){
-	//			return true;
-	//		} else{
-	//			return false;
-	//		}
-	//	}
-
-	public boolean extractAndExecuteTestCaseExperimenationSimulation(){
-		if (this.failureProb > 0.5){
-			return true;
-		} else{
-			return false;
-		}
-	}
 
 	//	Metodo necessario per costruire l'URL da inviare
 	private void selectTC(){
@@ -408,6 +458,12 @@ public class TestFrame{
 
 			case "value": sel = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
 			break;
+			
+			case "b_true": sel = "true";
+			break;
+			
+			case "b_false": sel = "false";
+			break;
 
 			case "lang": 
 				String[] languages = {"ita", "eng", "fra"}; 
@@ -424,10 +480,6 @@ public class TestFrame{
 				selPayload = selPayload.replace("{"+this.ic.get(i).name+"}", sel);
 			}
 
-		}
-		if(DEBUG_MODE) {
-			System.out.println("[DEBUG] url: "+ url);
-			System.out.println("[DEBUG] payload: "+ selPayload);
 		}
 
 	}
@@ -498,6 +550,15 @@ public class TestFrame{
 	public String getUrl(){
 		return this.url;
 	}
+	
+	public int getResponseCode(){
+		return this.responseCode;
+	}
+	
+	public long getResponseTime(){
+		return this.responseTime;
+	}
+
 
 	public String getSelPayload(){
 		return this.selPayload;
@@ -515,6 +576,11 @@ public class TestFrame{
 		for(int i=0; i<expectedResponses.size(); i++) {
 			System.out.printf(expectedResponses.get(i)+" ");
 		}
+	}
+	
+	public void printTestFrame() {
+		System.out.printf("- "+this.getName()+" | Method:"+ this.getReqType()+" | #Ic: "+this.ic.size()+" | Body: "+this.getPayload()+" | Expected responses: ");
+		this.printExpectedResponses();
 	}
 
 }

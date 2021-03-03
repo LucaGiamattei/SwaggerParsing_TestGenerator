@@ -30,8 +30,6 @@
 	<classpathentry kind="lib" path="C:/Users/Luca/workspace/Parsing_json/Librerie/swagger_parser/mailapi-1.4.3.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Luca/workspace/Parsing_json/Librerie/swagger_parser/msg-simple-1.1.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Luca/workspace/Parsing_json/Librerie/swagger_parser/rhino-1.7R4.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Luca/workspace/Parsing_json/Librerie/swagger_parser/slf4j-api-1.6.3.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Luca/workspace/Parsing_json/Librerie/swagger_parser/slf4j-ext-1.6.3.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Luca/workspace/Parsing_json/Librerie/swagger_parser/snakeyaml-1.18.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Luca/workspace/Parsing_json/Librerie/swagger_parser/swagger-annotations-1.5.20.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Luca/workspace/Parsing_json/Librerie/swagger_parser/swagger-annotations-2.0.1.jar"/>
@@ -47,5 +45,8 @@
 	<classpathentry kind="lib" path="C:/Users/Luca/workspace/Parsing_json/Librerie/swagger_parser/swagger-parser-v3-2.0.1.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Luca/workspace/Parsing_json/Librerie/swagger_parser/uri-template-0.9.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Luca/workspace/Parsing_json/Librerie/swagger_parser/validation-api-1.1.0.Final.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Luca/workspace/Parsing_json/Librerie/swagger_parser/slf4j-api-1.6.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Luca/workspace/Parsing_json/Librerie/swagger_parser/slf4j-ext-1.6.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Luca/workspace/Parsing_json_v2/Librerie/swagger_parser/slf4j-simple-1.6.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

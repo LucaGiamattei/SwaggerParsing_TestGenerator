@@ -38,12 +38,13 @@ import io.swagger.models.refs.RefFormat;
 
 public class TestFrameGenerator {
 	
-	private static final boolean DEBUG_MODE = false;
+	private static boolean DEBUG_MODE = false;
 	
 	private static final int N_IC_INTEGER = 7;
 	private static final int N_IC_STRING = 3;
 	private static final int N_IC_LANGUAGE = 3;
 	private static final int N_IC_SYMBOL = 3;
+	private static final int N_IC_BOOLEAN = 2;
 	private static final int N_IC_DEFAULT = 1;
 	/*
 	private static final int PATH_MODE = 0;
@@ -59,6 +60,13 @@ public class TestFrameGenerator {
 		super();		
 		testFrames = new ArrayList<TestFrame>();
 		count = 0;
+	}
+	
+	public TestFrameGenerator(boolean debug) throws IOException {
+		super();		
+		testFrames = new ArrayList<TestFrame>();
+		count = 0;
+		DEBUG_MODE = true;
 	}
 
 	
@@ -165,18 +173,18 @@ public class TestFrameGenerator {
 		    		
 	    		} else {
 	    			//caso 0 parametri
-		    		testFrames.add(new TestFrame("http://"+host+uri, String.valueOf(offset+count), method, "null"));
+		    		testFrames.add(new TestFrame("http://"+host+uri, String.valueOf(offset+count), method, "null", DEBUG_MODE));
 		    		
 		    		if(op.getValue().getResponses().size() != 0) {
-
+		    		
 		    		if(DEBUG_MODE) 
 			    	System.out.println("[DEBUG] Responses #"+op.getValue().getResponses().size()+" : ");
 		    			
 		    		for(Map.Entry<String,Response> resp : op.getValue().getResponses().entrySet()) {
 		    			if(DEBUG_MODE) 
 			            	System.out.println("[DEBUG] 	"+resp.getKey()+": "+resp.getValue().getDescription());
+		    			testFrames.get(offset+count).expectedResponses.add(Integer.parseInt(resp.getKey()));
 		    			}
-		    		
 		    		count++;
 		    		}
 	    		}
@@ -220,11 +228,13 @@ public class TestFrameGenerator {
 							typesTemp.add(types.get(j));
 							namesTemp.add(names.get(j));
 						}
+				    			
 						//Chiamata ricorsiva
 						addTestFrames(typesTemp,namesTemp,modes, responses, icTemp,uri,method,offset);
 					}
 				} else {
 					//CREO TF
+					
 					//devo definire gli n nodi foglia
 					for (int i = 0; i < n; i++) {
 						ArrayList<InputClass> icTemp = new ArrayList<InputClass>();
@@ -253,21 +263,21 @@ public class TestFrameGenerator {
 								queryP=true;
 							} else if(modes.get(j) == "BodyParameter") {
 								if(!bodyP) {
-									payload = "{"+icTemp.get(j).name+" : {"+icTemp.get(j).name+"}";
+									payload = "{\""+icTemp.get(j).name+"\" : \"{"+icTemp.get(j).name+"}\"";
 								}else {
-									payload += ", "+icTemp.get(j).name+" : {"+icTemp.get(j).name+"}";
+									payload += ", \""+icTemp.get(j).name+"\" : \"{"+icTemp.get(j).name+"}\"";
 								}
 								bodyP=true;
 							}
 						}
 
 						if(pathP && !queryP && !bodyP) {
-							testFrames.add(new TestFrame("http://"+host+uri, String.valueOf(offset+count), method, "null"));
+							testFrames.add(new TestFrame("http://"+host+uri, String.valueOf(offset+count), method, "null", DEBUG_MODE));
 						}else if(!pathP && queryP && !bodyP) {
-							testFrames.add(new TestFrame("http://"+host+uri+qry, String.valueOf(offset+count), method, "null"));
+							testFrames.add(new TestFrame("http://"+host+uri+qry, String.valueOf(offset+count), method, "null", DEBUG_MODE));
 						}else if((!pathP && !queryP && bodyP) || (pathP && !queryP && bodyP)) {
 							payload += "}";
-							testFrames.add(new TestFrame("http://"+host+uri, String.valueOf(offset+count), method, "null"));
+							testFrames.add(new TestFrame("http://"+host+uri, String.valueOf(offset+count), method, "null", DEBUG_MODE));
 							testFrames.get(offset+count).setPayload(payload);
 						}else {
 							System.out.println("Error");
@@ -304,6 +314,10 @@ public class TestFrameGenerator {
 				ic.add(new InputClass(name, "range", "1", "100"));
 				ic.add(new InputClass(name, "symbol", "0", null));
 				return N_IC_INTEGER;
+			case "boolean":
+				ic.add(new InputClass(name, "b_true", null, null));
+				ic.add(new InputClass(name, "b_false", null, null));
+				return N_IC_BOOLEAN;
 			case "integer":
 				ic.add(new InputClass(name, "empty", null, null));
 				ic.add(new InputClass(name, "symbol", "null", null));
@@ -334,14 +348,14 @@ public class TestFrameGenerator {
 	}
 	
 	
-	private void stampaTestFrames() {
+	public void stampaTestFrames() {
 		
 		System.out.println();
-		System.out.println("\n\n[DEBUG] ***********************************************************");
-		System.out.println("[DEBUG] ****************** "+testFrames.size()+" Test Frame generati *****************\n");
+		System.out.println("\n***********************************************************");
+		System.out.println("********************** "+testFrames.size()+" Test Frame **********************\n");
 		
 		for(int i=0; i<testFrames.size(); i++) {
-			System.out.printf("[DEBUG] "+testFrames.get(i).getName()+" | Metodo:"+ testFrames.get(i).getReqType()+" | #Ic: "+testFrames.get(i).ic.size()+" | Body: "+testFrames.get(i).getPayload()+" | Risposte: ");
+			System.out.printf("- "+testFrames.get(i).getName()+" | Method:"+ testFrames.get(i).getReqType()+" | #Ic: "+testFrames.get(i).ic.size()+" | Body: "+testFrames.get(i).getPayload()+" | Expected responses: ");
 			testFrames.get(i).printExpectedResponses();
 			System.out.println();
 		}
