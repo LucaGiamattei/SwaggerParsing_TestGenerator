@@ -1,4 +1,0 @@
-OT
-Reliability: 0.867|Number of Failures: 133.0
-WOT
-Reliability: 0.8679864365542183|Number of Failures: 1000.0
