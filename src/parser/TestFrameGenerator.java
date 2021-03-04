@@ -39,6 +39,7 @@ import io.swagger.models.refs.RefFormat;
 public class TestFrameGenerator {
 	
 	private static boolean DEBUG_MODE = false;
+	private static boolean QUICK_MODE = false;
 	
 	private static final int N_IC_INTEGER = 7;
 	private static final int N_IC_STRING = 3;
@@ -46,6 +47,7 @@ public class TestFrameGenerator {
 	private static final int N_IC_SYMBOL = 3;
 	private static final int N_IC_BOOLEAN = 2;
 	private static final int N_IC_DEFAULT = 1;
+	private static final int N_IC_QUICK = 2;
 	/*
 	private static final int PATH_MODE = 0;
 	private static final int QUERY_MODE = 1;
@@ -53,6 +55,7 @@ public class TestFrameGenerator {
 	*/
 	public ArrayList<TestFrame> testFrames;
 	private int count;
+	private int countTfFile;
 	private String host;
 	public double[][] matrix;
 	
@@ -60,12 +63,14 @@ public class TestFrameGenerator {
 		super();		
 		testFrames = new ArrayList<TestFrame>();
 		count = 0;
+		countTfFile = 0;
 	}
 	
 	public TestFrameGenerator(boolean debug) throws IOException {
 		super();		
 		testFrames = new ArrayList<TestFrame>();
 		count = 0;
+		countTfFile = 0;
 		DEBUG_MODE = true;
 	}
 
@@ -85,6 +90,12 @@ public class TestFrameGenerator {
 		if(DEBUG_MODE) {
 		System.out.println("[DEBUG] Description: " + swagger.getInfo().getDescription());
 		System.out.println("[DEBUG] Host: " + host+"\n");
+		}
+		
+		
+		if(!DEBUG_MODE) {
+			countTfFile = 0;
+			System.out.print("Test generated:              "); 
 		}
 		
 		//ciclo sulle risorse
@@ -186,6 +197,30 @@ public class TestFrameGenerator {
 		    			testFrames.get(offset+count).expectedResponses.add(Integer.parseInt(resp.getKey()));
 		    			}
 		    		count++;
+		    		countTfFile ++;
+		    		
+					if(!DEBUG_MODE) {
+						if(countTfFile-1 <10) {
+							System.out.print("\b"+countTfFile);
+						}else if(countTfFile-1 <100) {
+							System.out.print("\b\b"+countTfFile);
+						}else if(countTfFile-1 <1000) {
+							System.out.print("\b\b\b"+countTfFile);
+						}else if(countTfFile-1 <10000) {
+							System.out.print("\b\b\b\b"+countTfFile);
+						}else if(countTfFile-1 <100000) {
+							System.out.print("\b\b\b\b\b"+countTfFile);
+						}else if(countTfFile-1 <1000000) {
+							System.out.print("\b\b\b\b\b\b"+countTfFile);
+						}else if(countTfFile-1 <10000000) {
+							System.out.print("\b\b\b\b\b\b\b"+countTfFile);
+						}else if(countTfFile-1 <100000000) {
+							System.out.print("\b\b\b\b\b\b\b\b"+countTfFile);
+						}else if(countTfFile-1 <1000000000) {
+							System.out.print("\b\b\b\b\b\b\b\b\b"+countTfFile);
+						}
+					}
+					
 		    		}
 	    		}
 
@@ -234,7 +269,7 @@ public class TestFrameGenerator {
 					}
 				} else {
 					//CREO TF
-					
+
 					//devo definire gli n nodi foglia
 					for (int i = 0; i < n; i++) {
 						ArrayList<InputClass> icTemp = new ArrayList<InputClass>();
@@ -292,7 +327,31 @@ public class TestFrameGenerator {
 						testFrames.get(offset+count).expectedResponses = responses;
 						
 						count++;
+						countTfFile ++;
 					}
+					
+					if(!DEBUG_MODE) {
+						if(countTfFile-1 <10) {
+							System.out.print("\b"+countTfFile);
+						}else if(countTfFile-1 <100) {
+							System.out.print("\b\b"+countTfFile);
+						}else if(countTfFile-1 <1000) {
+							System.out.print("\b\b\b"+countTfFile);
+						}else if(countTfFile-1 <10000) {
+							System.out.print("\b\b\b\b"+countTfFile);
+						}else if(countTfFile-1 <100000) {
+							System.out.print("\b\b\b\b\b"+countTfFile);
+						}else if(countTfFile-1 <1000000) {
+							System.out.print("\b\b\b\b\b\b"+countTfFile);
+						}else if(countTfFile-1 <10000000) {
+							System.out.print("\b\b\b\b\b\b\b"+countTfFile);
+						}else if(countTfFile-1 <100000000) {
+							System.out.print("\b\b\b\b\b\b\b\b"+countTfFile);
+						}else if(countTfFile-1 <1000000000) {
+							System.out.print("\b\b\b\b\b\b\b\b\b"+countTfFile);
+						}
+					}
+					
 					
 				}
 			}
@@ -307,36 +366,53 @@ public class TestFrameGenerator {
 			//ATT: ci sono alcuni casi non considerati (es. number, boolean)
 			case "number":
 				ic.add(new InputClass(name, "empty", null, null));
-				ic.add(new InputClass(name, "symbol", "null", null));
-				ic.add(new InputClass(name, "greater", "2147483647", null));
-				ic.add(new InputClass(name, "lower", "-2147483648", null));
-				ic.add(new InputClass(name, "range", "-100", "-1"));
-				ic.add(new InputClass(name, "range", "1", "100"));
-				ic.add(new InputClass(name, "symbol", "0", null));
-				return N_IC_INTEGER;
+				ic.add(new InputClass(name, "range", "1", "100"));	
+				if(!QUICK_MODE) {
+					ic.add(new InputClass(name, "symbol", "null", null));
+					ic.add(new InputClass(name, "greater", "2147483647", null));
+					ic.add(new InputClass(name, "lower", "-2147483648", null));
+					ic.add(new InputClass(name, "range", "-100", "-1"));
+					ic.add(new InputClass(name, "symbol", "0", null));
+					return N_IC_INTEGER;
+				}
+				return N_IC_QUICK;
+				
 			case "boolean":
 				ic.add(new InputClass(name, "b_true", null, null));
 				ic.add(new InputClass(name, "b_false", null, null));
 				return N_IC_BOOLEAN;
+				
 			case "integer":
 				ic.add(new InputClass(name, "empty", null, null));
-				ic.add(new InputClass(name, "symbol", "null", null));
-				ic.add(new InputClass(name, "greater", "2147483647", null));
-				ic.add(new InputClass(name, "lower", "-2147483648", null));
-				ic.add(new InputClass(name, "range", "-100", "-1"));
-				ic.add(new InputClass(name, "range", "1", "100"));
-				ic.add(new InputClass(name, "symbol", "0", null));
-				return N_IC_INTEGER;				
+				ic.add(new InputClass(name, "range", "1", "100"));	
+				if(!QUICK_MODE) {
+					ic.add(new InputClass(name, "symbol", "null", null));
+					ic.add(new InputClass(name, "greater", "2147483647", null));
+					ic.add(new InputClass(name, "lower", "-2147483648", null));
+					ic.add(new InputClass(name, "range", "-100", "-1"));
+					ic.add(new InputClass(name, "symbol", "0", null));
+					return N_IC_INTEGER;
+				}
+				return N_IC_QUICK;
+				
 			case "string": 
 				ic.add(new InputClass(name, "empty", null, null));
-				ic.add(new InputClass(name, "symbol", "null", null));
 				ic.add(new InputClass(name, "s_range", "1", "100"));
-				return N_IC_STRING;
+				if(!QUICK_MODE) {
+					ic.add(new InputClass(name, "symbol", "null", null));
+					return N_IC_STRING;
+				}
+				return N_IC_QUICK;
+				
 			case "language":
 				ic.add(new InputClass(name, "empty", null, null));
 				ic.add(new InputClass(name, "lang", null, null));
-				ic.add(new InputClass(name, "s_range", "1", "100"));
-				return N_IC_LANGUAGE;
+				if(!QUICK_MODE) {
+					ic.add(new InputClass(name, "s_range", "1", "100"));
+					return N_IC_LANGUAGE;
+				}
+				return N_IC_QUICK;
+				
 			case "s_symbol":
 				ic.add(new InputClass(name, "empty", null, null));
 				//ic.add(new InputClass("("+name+")", "symbol", j.get("minimum").getAsString(), null));
@@ -427,6 +503,10 @@ public class TestFrameGenerator {
 	        }
 	    }*/
 	
+	
+	public void setQuickMode(boolean quickMode){
+		QUICK_MODE = quickMode;
+	}
 	
 	
 	

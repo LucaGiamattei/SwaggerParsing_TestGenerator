@@ -27,44 +27,6 @@ import analyzer.TestFrameAnalyzer;
 //import selector.AWSSelectorWR;
 
 
-	//tfg.JsonURIParser(path+"ts-admin-basic-info-service.json");
-//tfg.JsonURIParser(path+"ts-admin-order-service.json");
-	/*tfg.JsonURIParser(path+"ts-admin-route-service.json");
-tfg.JsonURIParser(path+"ts-admin-travel-service.json");
-tfg.JsonURIParser(path+"ts-admin-user-service.json");
-tfg.JsonURIParser(path+"ts-assurance-service.json");
-tfg.JsonURIParser(path+"ts-basic-service.json");
-tfg.JsonURIParser(path+"ts-cancel-service.json");
-tfg.JsonURIParser(path+"ts-config-service.json");
-tfg.JsonURIParser(path+"ts-consign-price-service.json");
-tfg.JsonURIParser(path+"ts-consign-service.json");
-tfg.JsonURIParser(path+"ts-contacts-service.json");
-tfg.JsonURIParser(path+"ts-execute-service.json");
-tfg.JsonURIParser(path+"ts-food-map-service.json");
-tfg.JsonURIParser(path+"ts-food-service.json");
-tfg.JsonURIParser(path+"ts-inside-payment-service.json");
-tfg.JsonURIParser(path+"ts-notification-service.json");
-tfg.JsonURIParser(path+"ts-order-other-service.json");
-tfg.JsonURIParser(path+"ts-order-service.json");
-tfg.JsonURIParser(path+"ts-payment-service.json");
-tfg.JsonURIParser(path+"ts-preserve-other-service.json");
-tfg.JsonURIParser(path+"ts-preserve-service.json");
-tfg.JsonURIParser(path+"ts-price-service.json");
-tfg.JsonURIParser(path+"ts-rebook-service.json");
-tfg.JsonURIParser(path+"ts-route-plan-service.json");
-tfg.JsonURIParser(path+"ts-route-service.json");
-tfg.JsonURIParser(path+"ts-seat-service.json");
-tfg.JsonURIParser(path+"ts-security-service.json");
-tfg.JsonURIParser(path+"ts-station-service.json");
-tfg.JsonURIParser(path+"ts-ticketinfo-service.json");
-tfg.JsonURIParser(path+"ts-train-service.json");
-tfg.JsonURIParser(path+"ts-travel-plan-service.json");
-tfg.JsonURIParser(path+"ts-travel-service.json");
-tfg.JsonURIParser(path+"ts-travel2-service.json");
-
-*/
-
-
 public class MainReq {
 
 	private static Scanner scan;
@@ -116,9 +78,21 @@ public class MainReq {
 				tfg = new TestFrameGenerator();
 			}
 			
+			System.out.println("\n***************** QuickMode");
+			Selection = 0;
+			while(Selection == 0) {
+				System.out.println("Select:\n1) Normal Mode \n2) Quick Mode (only valid/non-valid input classes per type)");
+				Selection = scan.nextInt();
+				if((Selection != 1)&&(Selection != 2)) {Selection = 0;}
+			}
+			
+			if(Selection == 2) {
+				tfg.setQuickMode(true);
+			}
+			System.out.println("***************** Parsing files ");
 			for(int i = 0; i<jsonFiles.size(); i++) {
-				System.out.println("***************** Parsing files ");
 				tfg.JsonURIParser(path+jsonFiles.get(i));
+				System.out.println("\n");
 			}
 			System.out.println("***************** Parsing Done");
 			
@@ -190,29 +164,19 @@ public class MainReq {
 					if(failedIndexes.size() > 0) {
 						Selection = 0;
 						while(Selection == 0) {
-							System.out.println("\nSelect:\n 1) Back to main options \n 2) Print failed test ("+failedIndexes.size()+" test)\n 3) Analyze failures");
+							System.out.println("\nSelect:\n 1) Analyze \n 2) Back to main options");
 							Selection = scan.nextInt();
-							if((Selection != 1)&&(Selection != 2)&&(Selection != 3)){Selection = 0;}
-
+							if((Selection != 1)&&(Selection != 2)){Selection = 0;}
+	
 							if(Selection == 2) {
-								for(int i = 0; i<failedIndexes.size(); i++) {
-									System.out.println("\n----------------------------------------\nurl: "+tfg.testFrames.get(failedIndexes.get(i)).getUrl());
-									if(tfg.testFrames.get(failedIndexes.get(i)).getSelPayload() != "null")
-										System.out.println("payload: "+ tfg.testFrames.get(failedIndexes.get(i)).getSelPayload());
-									System.out.print("Expected Responses: ");
-									tfg.testFrames.get(failedIndexes.get(i)).printExpectedResponses();
-									System.out.println("\nReturned Response: "+ tfg.testFrames.get(failedIndexes.get(i)).getResponseCode());
-									System.out.println("Response Time: "+ tfg.testFrames.get(failedIndexes.get(i)).getResponseTime()+" ms");
-								}
 								break;
+								
 							}else if(Selection == 1) {
-								break;
-							}else if(Selection == 3) {
-								System.out.println("\n***************** Failures Analysis");
+								System.out.println("\n***************** Analysis");
 								
 								TestFrameAnalyzer tfa = new TestFrameAnalyzer();
 								
-								tfa.countResponseCodes(tfg, failedIndexes);
+								tfa.analyzeTest(tfg, tfs, failedIndexes);
 								
 								Selection = 0;
 							}

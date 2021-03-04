@@ -364,15 +364,18 @@ public class TestFrame{
 			} else if(this.reqType.equals("HEAD")||this.reqType.equals("head")){
 				this.sendHead();
 			}  else {
-				System.out.println("\n[ERROR] Metodo non implementato: " + this.reqType);
+				//System.out.println("\n[ERROR] Metodo non implementato: " + this.reqType);
+				responseCode = -2;
 				return false;
 			}
 
 		} catch(java.net.SocketTimeoutException e){
 			if(DEBUG_MODE) {
 				System.out.println("[DEBUG] Exception risposta (timeout): "+ responseCode);
+				System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
 				System.out.println(e);
 			}
+			responseCode = -1;
 			return false;
 			
 		} catch (Exception e) {
@@ -387,10 +390,12 @@ public class TestFrame{
 			
 			if(returnValue){
 				if(DEBUG_MODE) 
-				System.out.println("[DEBUG] ExceptionHandler Risposta attesa: "+ responseCode);			
+				System.out.println("[DEBUG] ExceptionHandler Risposta attesa: "+ responseCode);
+				System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
 			} else{
 				if(DEBUG_MODE) 
 				System.out.println("[DEBUG] ExceptionHandler Risposta non attesa: "+ responseCode);
+				System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
 			}
 			return returnValue;
 		}
@@ -404,10 +409,13 @@ public class TestFrame{
 		if(DEBUG_MODE) {
 			if(returnValue) {
 				System.out.println("[DEBUG] Ricevuta risposta attesa: "+ responseCode);
+				System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
 			}else {
 				System.out.println("[DEBUG] Ricevuta risposta non attesa: "+ responseCode);
+				System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
 			}
 		}
+		
 		return returnValue;
 	}
 
