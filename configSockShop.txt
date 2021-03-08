@@ -1,6 +1,6 @@
 jsonFile=JsonFilesSockShop.txt
 testMode=normalmode
-logMode=nolog
-username=
-password=
-loginUrl=
+logMode=log
+username=user
+password=password
+loginUrl=http://localhost:12340/api/v1/users/login

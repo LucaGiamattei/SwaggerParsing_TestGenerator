@@ -1,0 +1,7 @@
+JSONdoc/Ftgo/swagger_8081.json
+JSONdoc/Ftgo/swagger_8082.json
+JSONdoc/Ftgo/swagger_8083.json
+JSONdoc/Ftgo/swagger_8084.json
+JSONdoc/Ftgo/swagger_8085.json
+JSONdoc/Ftgo/swagger_8086.json
+JSONdoc/Ftgo/swagger_8089.json
