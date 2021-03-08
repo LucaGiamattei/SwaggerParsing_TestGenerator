@@ -27,174 +27,198 @@ import analyzer.TestFrameAnalyzer;
 //import selector.AWSSelectorWR;
 
 
+/* Configuration Parameters
+ * 1) file jsons (filename.txt)
+ * 2) quickmode (quickmode, normalmode)
+ * 3) loginmode (log, nolog)
+ * 4) username (optional)
+ * 5) password (optional)
+ * 6) loginUrl (optional)
+ * */
+
 public class MainReq {
 
 	private static Scanner scan;
+	private static String debugMode = "";
+	private static String loginMode = "";
+	private static String testMode = "";
+	private static String jsonsFile = "";
+	private static String username = "";
+	private static String password = "";
+	private static String token = "";
+	private static String loginUrl = "";
+	private static String path = "/";
+	private static ArrayList<String> jsonFiles = new ArrayList<String>();
+	private static ArrayList<String> configParameters = new ArrayList<String>();
 
 	public static void main(String[] args) {
 		scan = new Scanner(System.in);
-		String path = "/";
-		String token = "";
-		ArrayList<String> jsonFiles = new ArrayList<String>();
-
+		//String path = "/";
+		int Selection = 0;
+		
 		try {
-			String debugMode = "Default\n";
 			
 			if(args.length >= 1) {
-			String fileToRead = args[0];
-			if(args.length == 2) {
-				debugMode = args[1];
-			}
-			
-			System.out.println("\n\n***************** Login");
-			int Selection = 0;
-			while(Selection == 0) {
-				System.out.println("Select:\n1) Login Admin\n2) Login User\n3) Don't log");
-				Selection = scan.nextInt();
-				if((Selection != 1)&&(Selection != 2)&&(Selection != 3)) {Selection = 0;}
-			}
-			
-			if(Selection != 3) {
-				if(Selection == 1) {
-					token = login(1);
+				String configFile = args[0];
+				if(args.length == 2) {
+					debugMode = args[1];
 				}else {
-					token = login(0);
+					debugMode = "nodebug";
 				}
 				
-				if(token != null) {
-					System.out.println("\nLogin done, token acquired..\n");
-					//System.out.println("TOKEN: "+token+"\n");
-				}else {
-					System.out.println("\nLogin failed..\n");
-				}
-			}
-			
-			readJsons(fileToRead, jsonFiles);
-			
-			TestFrameGenerator tfg;
-			if (debugMode.equals("debug") || debugMode.equals("DEBUG") ) {
-				tfg = new TestFrameGenerator(true);
-			} else {
-				tfg = new TestFrameGenerator();
-			}
-			
-			System.out.println("\n***************** QuickMode");
-			Selection = 0;
-			while(Selection == 0) {
-				System.out.println("Select:\n1) Normal Mode \n2) Quick Mode (only valid/non-valid input classes per type)");
-				Selection = scan.nextInt();
-				if((Selection != 1)&&(Selection != 2)) {Selection = 0;}
-			}
-			
-			if(Selection == 2) {
-				tfg.setQuickMode(true);
-			}
-			System.out.println("***************** Parsing files ");
-			for(int i = 0; i<jsonFiles.size(); i++) {
-				tfg.JsonURIParser(path+jsonFiles.get(i));
-				System.out.println("\n");
-			}
-			System.out.println("***************** Parsing Done");
-			
-			Selection = 0;
-			while(Selection==0){
-				System.out.println("\n*****************____Main____******************");
-				System.out.println("Options:\n1) Start requesting \n2) Print test generated (not recommended for big datasets, "+tfg.testFrames.size()+" tests to print)\n3) Exit");
-
-				Selection = scan.nextInt();
-				if((Selection != 1)&&(Selection != 2)&&(Selection != 3)){Selection = 0;}
-				
-				if(Selection == 1) {
-					int N_tf = 0;
+				boolean configDone  = readConfig(configFile);
+				if(configDone) {
 					
-					while (N_tf == 0 || N_tf > tfg.testFrames.size()) {
-						System.out.println("\nInsert the number of test to execute (max: "+ tfg.testFrames.size() +")");
-						N_tf = scan.nextInt();
+					System.out.println("\n\n***************** CONFIGURATION");
+					System.out.println("Json File: " + jsonsFile);
+					System.out.println("Test mode: " + testMode);
+					System.out.println("Debug mode: " + debugMode);
+					System.out.println("Login mode: " + loginMode);
+					if(loginMode.equals("log")) {
+						System.out.println("	Username: " + username);
+						System.out.println("	Password: " + password);
+						System.out.println("	loginUrl: " + loginUrl);
 					}
 					
-					
-					System.out.println("\nSelecting "+ N_tf +" random test...");
-					
-					ArrayList<Integer> tfs = new ArrayList<Integer>();
-					Random random = new Random();
-					
-					for(int i = 0; i < N_tf; i++) {
-						int rNum = random.nextInt(tfg.testFrames.size()-1);
-						while (tfs.contains(rNum)) {
-							rNum = random.nextInt(tfg.testFrames.size()-1);
+					//Login Setting
+					if(loginMode.equals("log")) {
+						token = login();
+						if(token != null) {
+							System.out.println("\nLogin done, token acquired..");
+							//System.out.println("TOKEN: "+token+"\n");
+						}else {
+							System.out.println("\nLogin failed..");
 						}
-						tfs.add(rNum);
 					}
 					
-					ArrayList<Integer> failedIndexes = new ArrayList<Integer>();
+					//json files reading
+					readJsons(jsonsFile, jsonFiles);
 					
-					System.out.println("\nRequesting...\n");
-					boolean e = false;
+					//debug/nodebug tfg creating
+					TestFrameGenerator tfg;
+					if (debugMode.equals("debug") || debugMode.equals("DEBUG") ) {
+						tfg = new TestFrameGenerator(true);
+					} else {
+						tfg = new TestFrameGenerator();
+					}
 					
-					int countReset = 0;
-					boolean changeLoading = true;
+					//quickmode Setting
+					if(testMode.equals("quickmode")) {
+						tfg.setQuickMode(true);
+					}
 					
-					for(int i=0; i<N_tf ;i++){
-						//System.out.println();
-						tfg.testFrames.get(tfs.get(i)).setFinalToken(token);
-						e=tfg.testFrames.get(tfs.get(i)).extractAndExecuteTestCase();
+					System.out.println("\n***************** Parsing files ");
+					for(int i = 0; i<jsonFiles.size(); i++) {
+						tfg.JsonURIParser(path+jsonFiles.get(i));
+						System.out.println("\n");
+					}
+					System.out.println("***************** Parsing Done");
+					
+					Selection = 0;
+					while(Selection==0){
+						System.out.println("\n*****************__MAIN OPTIONS");
+						System.out.println("Options:\n1) Start requesting \n2) Print generated test (not recommended for big datasets, "+tfg.testFrames.size()+" test to print)\n3) Exit");
+		
+						Selection = scan.nextInt();
+						if(Selection < 1 || Selection > 3){Selection = 0;}
 						
-						countReset++;
-						if(countReset == 25) {
-							if(changeLoading) {
-								System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\");countReset = 0;
-								changeLoading = false;
-							}else{System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b////////////////////");countReset = 0;
-							changeLoading = true;}
-									
-						}
-						if(!e){
-							failedIndexes.add(tfs.get(i));
-							e = false;
-						}
-					}
-					System.out.println("\n***************** Requests End");
-					
-					int success = N_tf-failedIndexes.size();
-					System.out.println("\nResults:");
-					System.out.println("Test executed: " + N_tf);
-					System.out.println("Success: " + success);
-					System.out.println("Failures: " + failedIndexes.size());
-					
-					if(failedIndexes.size() > 0) {
-						Selection = 0;
-						while(Selection == 0) {
-							System.out.println("\nSelect:\n 1) Analyze \n 2) Back to main options");
-							Selection = scan.nextInt();
-							if((Selection != 1)&&(Selection != 2)){Selection = 0;}
-	
-							if(Selection == 2) {
-								break;
+						if(Selection == 1) {
+							int N_tf = 0;
+							
+							while (N_tf == 0 || N_tf > tfg.testFrames.size()) {
+								System.out.println("\nInsert the number of test to execute (max: "+ tfg.testFrames.size() +")");
+								N_tf = scan.nextInt();
+							}
+														
+							ArrayList<Integer> tfs = new ArrayList<Integer>();
+							Random random = new Random();
+							
+							if(N_tf ==  tfg.testFrames.size()) {
+								System.out.println("\nAll dataset selected..");
+								for(int i = 0; i < tfg.testFrames.size(); i++) {
+									tfs.add(i);
+								}
+							}else {
+								System.out.println("\nSelecting "+ N_tf +" random test..");
+
+								for(int i = 0; i < N_tf; i++) {
+									int rNum = random.nextInt(tfg.testFrames.size()-1);
+									while (tfs.contains(rNum)) {
+										rNum = random.nextInt(tfg.testFrames.size()-1);
+									}
+									tfs.add(rNum);
+								}
+							}
+							ArrayList<Integer> failedIndexes = new ArrayList<Integer>();
+							
+							System.out.println("\nRequesting...\n");
+							boolean e = false;
+							
+							int countReset = 0;
+							boolean changeLoading = true;
+							
+							for(int i=0; i<N_tf ;i++){
+								//System.out.println();
+								tfg.testFrames.get(tfs.get(i)).setFinalToken(token);
+								e=tfg.testFrames.get(tfs.get(i)).extractAndExecuteTestCase();
 								
-							}else if(Selection == 1) {
-								System.out.println("\n***************** Analysis");
-								
-								TestFrameAnalyzer tfa = new TestFrameAnalyzer();
-								
-								tfa.analyzeTest(tfg, tfs, failedIndexes);
-								
+								countReset++;
+								if(countReset == 25) {
+									if(changeLoading) {
+										System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\");countReset = 0;
+										changeLoading = false;
+									}else{System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b////////////////////");countReset = 0;
+									changeLoading = true;}
+											
+								}
+								if(!e){
+									failedIndexes.add(tfs.get(i));
+									e = false;
+								}
+							}
+							System.out.println("\n***************** Requests End");
+							
+							int success = N_tf-failedIndexes.size();
+							System.out.println("\nResults:");
+							System.out.println("Test executed: " + N_tf);
+							System.out.println("Success: " + success);
+							System.out.println("Failures: " + failedIndexes.size());
+							
+							if(failedIndexes.size() > 0) {
+								Selection = 0;
+								while(Selection == 0) {
+									System.out.println("\nSelect:\n 1) Analyze \n 2) Back to main options");
+									Selection = scan.nextInt();
+									if(Selection < 1 || Selection > 2){Selection = 0;}
+			
+									if(Selection == 2) {
+										break;
+										
+									}else if(Selection == 1) {
+										System.out.println("\n***************** Analysis");
+										
+										TestFrameAnalyzer tfa = new TestFrameAnalyzer();
+										
+										tfa.analyzeTest(tfg, tfs, failedIndexes);
+										//Selection = 0;
+									}
+								}
 								Selection = 0;
 							}
+							Selection = 0;
 						}
-						Selection = 0;
+						
+						if(Selection == 2) {
+							tfg.stampaTestFrames();
+							Selection = 0;
+						}
 					}
-					Selection = 0;
+					System.out.println("***************** Exit");
+				}else {
+					System.out.println("[ERROR] Configuration Failed");
 				}
-				
-				if(Selection == 2) {
-					tfg.stampaTestFrames();
-					Selection = 0;
-				}
-			}
-			System.out.println("***************** Exit");
-			
 			}else {
-				System.out.println("Input parameters: \n - Json file name \n - <debug> (optional)");
+				System.out.println("[ERROR] Requested input parameters: \n - Configuration file name \n - <debug> (optional)");
 			}
 			
 		} catch (IOException e) {
@@ -212,7 +236,6 @@ public class MainReq {
 	
 	//FUNZIONI AUSILIARIE
 	
-	
 	private static void readJsons(String fileToRead, ArrayList<String> jsonFiles) {
 		try {
 	        File myObj = new File(fileToRead);
@@ -223,12 +246,11 @@ public class MainReq {
 	        }
 	        myReader.close();
 	      } catch (Exception e) {
-	    	  System.out.println("[ERRORE] Non è possibile leggere il file indicato.");
+	    	  System.out.println("[ERROR] Json retrieval: File read failed.");
 	      }
 	}
 	
-	private static String login(int admin_mode) {
-		String url = "http://localhost:12340/api/v1/users/login";
+	private static String login() {
 		int time=5000;
 		
 		
@@ -236,7 +258,7 @@ public class MainReq {
 		StringBuffer response = null;
 
 		try {
-			URL obj = new URL(url);
+			URL obj = new URL(loginUrl);
 			con = (HttpURLConnection) obj.openConnection();	
 			
 			con.setRequestMethod("POST");
@@ -247,11 +269,9 @@ public class MainReq {
 			con.setReadTimeout((time));
 			
 			OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
-			if(admin_mode == 1) {
-				wr.write("{\"username\": \"admin\", \"password\": \"222222\"}");
-			}else {
-				wr.write("{\"username\": \"fdse_microservice\", \"password\": \"111111\"}");
-			}
+			
+			wr.write("{\"username\": \""+username+"\", \"password\": \""+password+"\"}");
+				
 			wr.flush();
 
 			int responseCode = con.getResponseCode();
@@ -271,7 +291,7 @@ public class MainReq {
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-	        System.out.println("\n[ERRORE] Problema in connessione");
+	        System.out.println("\n[ERROR] Login: Connection problem.");
 		} finally {
 			if (con != null) {
 				con.disconnect();
@@ -291,6 +311,47 @@ public class MainReq {
 		JsonObject data = obj.getAsJsonObject("data");
 		
 		return data.get("token").toString().replace("\"","");
+	}
+	
+	
+	private static boolean readConfig(String configFile) {
+		try {
+	        File myObj = new File(configFile);
+	        Scanner myReader = new Scanner(myObj);
+	        while (myReader.hasNextLine()) {
+	          String data = myReader.nextLine();
+	          configParameters.add(data);
+	        }
+	        myReader.close();
+	      } catch (Exception e) {
+	    	  System.out.println("[ERROR] Configuration: File read failed.");
+	      }
+		return parseConfigParameters();
+	}
+	
+
+	private static boolean parseConfigParameters() {
+		
+		boolean returnVal = false;
+		
+		if(configParameters.size() >= 3 && configParameters.size() <= 6) {
+			//jsonsFile parsing
+			jsonsFile = configParameters.get(0).split("=")[1];
+			testMode = configParameters.get(1).split("=")[1];
+			if(testMode.equals("quickmode") || testMode.equals("normalmode")) {
+				loginMode = configParameters.get(2).split("=")[1];
+				if(loginMode.equals("log") || loginMode.equals("nolog")) {
+					if(loginMode.equals("log")) {
+						username = configParameters.get(3).split("=")[1];
+						password = configParameters.get(4).split("=")[1];
+						loginUrl = configParameters.get(5).split("=")[1];
+					}
+					returnVal = true;
+				}
+			}
+		}
+		
+		return returnVal;
 	}
 	
 }

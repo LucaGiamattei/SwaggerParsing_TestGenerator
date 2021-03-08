@@ -371,7 +371,7 @@ public class TestFrame{
 
 		} catch(java.net.SocketTimeoutException e){
 			if(DEBUG_MODE) {
-				System.out.println("[DEBUG] Exception risposta (timeout): "+ responseCode);
+				System.out.println("[DEBUG] Exception response (timeout): "+ responseCode);
 				System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
 				System.out.println(e);
 			}
@@ -387,15 +387,15 @@ public class TestFrame{
 				if(responseCode == expectedResponses.get(i))
 					returnValue = true;
 			}
-			
-			if(returnValue){
-				if(DEBUG_MODE) 
-				System.out.println("[DEBUG] ExceptionHandler Risposta attesa: "+ responseCode);
-				System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
-			} else{
-				if(DEBUG_MODE) 
-				System.out.println("[DEBUG] ExceptionHandler Risposta non attesa: "+ responseCode);
-				System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
+			if(DEBUG_MODE) {
+				if(returnValue){
+					System.out.println("[DEBUG] ExceptionHandler expected response: "+ responseCode);
+					System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
+	
+				} else{
+					System.out.println("[DEBUG] ExceptionHandler not expected response: "+ responseCode);
+					System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
+				}
 			}
 			return returnValue;
 		}
@@ -408,10 +408,10 @@ public class TestFrame{
 		
 		if(DEBUG_MODE) {
 			if(returnValue) {
-				System.out.println("[DEBUG] Ricevuta risposta attesa: "+ responseCode);
+				System.out.println("[DEBUG] Expected response received: "+ responseCode);
 				System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
 			}else {
-				System.out.println("[DEBUG] Ricevuta risposta non attesa: "+ responseCode);
+				System.out.println("[DEBUG] Not expected response received: "+ responseCode);
 				System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
 			}
 		}

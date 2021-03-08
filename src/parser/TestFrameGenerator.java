@@ -40,6 +40,7 @@ public class TestFrameGenerator {
 	
 	private static boolean DEBUG_MODE = false;
 	private static boolean QUICK_MODE = false;
+	private static boolean SMART_MODE = false;
 	
 	private static final int N_IC_INTEGER = 7;
 	private static final int N_IC_STRING = 3;
@@ -64,6 +65,7 @@ public class TestFrameGenerator {
 		testFrames = new ArrayList<TestFrame>();
 		count = 0;
 		countTfFile = 0;
+		host = "";
 	}
 	
 	public TestFrameGenerator(boolean debug) throws IOException {
@@ -72,6 +74,7 @@ public class TestFrameGenerator {
 		count = 0;
 		countTfFile = 0;
 		DEBUG_MODE = true;
+		host = "";
 	}
 
 	
@@ -87,9 +90,14 @@ public class TestFrameGenerator {
 		 
 		host = swagger.getHost();
 		
+		if(!host.contains(":")) {
+			System.out.println("[WARNING] Host found: \"" + host+"\", Host written: \"localhost/"+host+"\"");
+			host = "localhost/"+host;
+		}
+		
 		if(DEBUG_MODE) {
 		System.out.println("[DEBUG] Description: " + swagger.getInfo().getDescription());
-		System.out.println("[DEBUG] Host: " + host+"\n");
+		System.out.println("[DEBUG] Host: " + host);
 		}
 		
 		
@@ -102,7 +110,7 @@ public class TestFrameGenerator {
 		for(Map.Entry<String, Path> entry : swagger.getPaths().entrySet()) {
 			
 			if(DEBUG_MODE) {
-			System.out.println("\n\n[DEBUG] --------------------------------------------------------");
+			System.out.println("\n[DEBUG] --------------------------------------------------------");
 			System.out.println("[DEBUG] Path: " + entry.getKey());
 			}
 			
@@ -140,7 +148,7 @@ public class TestFrameGenerator {
 		    				//caso in cui non c'è un riferimento ma devo fare parse dello schema
 		    				if(!isRef) {
 		    					if(DEBUG_MODE) 
-		    					System.out.println("[DEBUG] 	Non ho trovato riferimento, eseguo parsing schema..");
+		    					System.out.println("[DEBUG] 	No reference found, doing schema parsing..");
 		    					
 		    					names.add(p.getName());
 		    					ModelImpl modelImpl = (ModelImpl) ((BodyParameter) p).getSchema();
@@ -200,27 +208,8 @@ public class TestFrameGenerator {
 		    		countTfFile ++;
 		    		
 					if(!DEBUG_MODE) {
-						if(countTfFile-1 <10) {
-							System.out.print("\b"+countTfFile);
-						}else if(countTfFile-1 <100) {
-							System.out.print("\b\b"+countTfFile);
-						}else if(countTfFile-1 <1000) {
-							System.out.print("\b\b\b"+countTfFile);
-						}else if(countTfFile-1 <10000) {
-							System.out.print("\b\b\b\b"+countTfFile);
-						}else if(countTfFile-1 <100000) {
-							System.out.print("\b\b\b\b\b"+countTfFile);
-						}else if(countTfFile-1 <1000000) {
-							System.out.print("\b\b\b\b\b\b"+countTfFile);
-						}else if(countTfFile-1 <10000000) {
-							System.out.print("\b\b\b\b\b\b\b"+countTfFile);
-						}else if(countTfFile-1 <100000000) {
-							System.out.print("\b\b\b\b\b\b\b\b"+countTfFile);
-						}else if(countTfFile-1 <1000000000) {
-							System.out.print("\b\b\b\b\b\b\b\b\b"+countTfFile);
-						}
+						printCount();
 					}
-					
 		    		}
 	    		}
 
@@ -331,28 +320,8 @@ public class TestFrameGenerator {
 					}
 					
 					if(!DEBUG_MODE) {
-						if(countTfFile-1 <10) {
-							System.out.print("\b"+countTfFile);
-						}else if(countTfFile-1 <100) {
-							System.out.print("\b\b"+countTfFile);
-						}else if(countTfFile-1 <1000) {
-							System.out.print("\b\b\b"+countTfFile);
-						}else if(countTfFile-1 <10000) {
-							System.out.print("\b\b\b\b"+countTfFile);
-						}else if(countTfFile-1 <100000) {
-							System.out.print("\b\b\b\b\b"+countTfFile);
-						}else if(countTfFile-1 <1000000) {
-							System.out.print("\b\b\b\b\b\b"+countTfFile);
-						}else if(countTfFile-1 <10000000) {
-							System.out.print("\b\b\b\b\b\b\b"+countTfFile);
-						}else if(countTfFile-1 <100000000) {
-							System.out.print("\b\b\b\b\b\b\b\b"+countTfFile);
-						}else if(countTfFile-1 <1000000000) {
-							System.out.print("\b\b\b\b\b\b\b\b\b"+countTfFile);
-						}
+						printCount();
 					}
-					
-					
 				}
 			}
 	}
@@ -508,6 +477,10 @@ public class TestFrameGenerator {
 		QUICK_MODE = quickMode;
 	}
 	
+	public void setSmartMode(boolean smartMode){
+		QUICK_MODE = smartMode;
+	}
+	
 	
 	
 	
@@ -581,6 +554,28 @@ public class TestFrameGenerator {
 //				System.out.print(matrix[i][j]+" ");
 			}
 //			System.out.println();
+		}
+	}
+	
+	public void printCount(){
+		if(countTfFile-1 <10) {
+			System.out.print("\b"+countTfFile);
+		}else if(countTfFile-1 <100) {
+			System.out.print("\b\b"+countTfFile);
+		}else if(countTfFile-1 <1000) {
+			System.out.print("\b\b\b"+countTfFile);
+		}else if(countTfFile-1 <10000) {
+			System.out.print("\b\b\b\b"+countTfFile);
+		}else if(countTfFile-1 <100000) {
+			System.out.print("\b\b\b\b\b"+countTfFile);
+		}else if(countTfFile-1 <1000000) {
+			System.out.print("\b\b\b\b\b\b"+countTfFile);
+		}else if(countTfFile-1 <10000000) {
+			System.out.print("\b\b\b\b\b\b\b"+countTfFile);
+		}else if(countTfFile-1 <100000000) {
+			System.out.print("\b\b\b\b\b\b\b\b"+countTfFile);
+		}else if(countTfFile-1 <1000000000) {
+			System.out.print("\b\b\b\b\b\b\b\b\b"+countTfFile);
 		}
 	}
 	

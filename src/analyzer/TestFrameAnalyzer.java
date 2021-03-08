@@ -11,6 +11,7 @@ public class TestFrameAnalyzer {
 	private ArrayList<Integer> count;
 	private ArrayList<Long> respTimes;
 	private ArrayList<Integer> zeroRespIndexes;
+	private ArrayList<Integer> successIndexes;
 	private int maxIndex;
 	private int minIndex;
 	
@@ -21,6 +22,7 @@ public class TestFrameAnalyzer {
 		count = new ArrayList<Integer>();
 		respTimes = new ArrayList<Long>();
 		zeroRespIndexes = new ArrayList<Integer>();
+		successIndexes = new ArrayList<Integer>();
 		minIndex = -1;
 		maxIndex = -1;
 	}
@@ -42,6 +44,8 @@ public class TestFrameAnalyzer {
 					codes.add(code);
 					count.add(1);
 				}
+			}else {
+				successIndexes.add(tfs.get(i));
 			}
 			
 			long respTime = tfg.testFrames.get(tfs.get(i)).getResponseTime();
@@ -53,77 +57,61 @@ public class TestFrameAnalyzer {
 		
 		int Selection = 0;
 		while(Selection == 0) {
-			System.out.println("\nSelect:\n1) Calculate Statistics\n2) Print failed test ("+failedIndexes.size()+")\n3) Print min and max response time test\n4) Exit from analyzer");
+			System.out.println("\nSelect:\n1) Calculate Statistics\n"
+					+ "2) Print failed test ("+failedIndexes.size()+")\n"
+					+ "3) Print success test ("+successIndexes.size()+")\n"
+					+ "4) Print max/min response time test\n"
+					+ "5) Exit from analyzer");
 			Selection = scan.nextInt();
-			if((Selection != 1)&&(Selection != 2)&&(Selection != 3)&&(Selection != 4)) {Selection = 0;}
+			if(Selection < 1 || Selection > 5) {Selection = 0;}
 			
-			//stampa 0 resp time
-			/*else if(Selection == 4) {
-				if(zeroRespIndexes.size() != 0) {
-					for(int i = 0; i<zeroRespIndexes.size(); i++) {
-						System.out.println("\n----------------------------------------\nurl: "+tfg.testFrames.get(zeroRespIndexes.get(i)).getUrl());
-						if(tfg.testFrames.get(zeroRespIndexes.get(i)).getSelPayload() != "null")
-							System.out.println("payload: "+ tfg.testFrames.get(zeroRespIndexes.get(i)).getSelPayload());
-						System.out.print("Expected Responses: ");
-						tfg.testFrames.get(zeroRespIndexes.get(i)).printExpectedResponses();
-						System.out.println("\nReturned Response: "+ tfg.testFrames.get(zeroRespIndexes.get(i)).getResponseCode());
-						System.out.println("Response Time: "+ tfg.testFrames.get(zeroRespIndexes.get(i)).getResponseTime()+" ms");
-					}
-				} else {
-					System.out.println("No 0 response time test found.. ");
-				}
+			else if (Selection == 1) {
+				//statistics
+				printStatistics(tfg, tfs, failedIndexes);
 				Selection = 0;
 				
-			}*/ else if(Selection == 3) {
+			}else if (Selection == 2) {
+				printTest(tfg, failedIndexes);
+				Selection = 0;
+				
+			}else if (Selection == 3) {
+				printTest(tfg, successIndexes);
+				Selection = 0;
+				
+			}else if(Selection == 4) {
 				//stampa min max
 				if(maxIndex != -1 && minIndex != -1) {
-					//max
-					System.out.println("\n------------------MAX-------------------\nurl: "+tfg.testFrames.get(maxIndex).getUrl());
-					if(tfg.testFrames.get(maxIndex).getSelPayload() != "null")
-						System.out.println("payload: "+ tfg.testFrames.get(maxIndex).getSelPayload());
-					System.out.print("Expected Responses: ");
-					tfg.testFrames.get(maxIndex).printExpectedResponses();
-					System.out.println("\nReturned Response: "+ tfg.testFrames.get(maxIndex).getResponseCode());
-					System.out.println("Response Time: "+ tfg.testFrames.get(maxIndex).getResponseTime()+" ms");
-				
-					System.out.println("\n------------------MIN-------------------\nurl: "+tfg.testFrames.get(minIndex).getUrl());
-					if(tfg.testFrames.get(minIndex).getSelPayload() != "null")
-						System.out.println("payload: "+ tfg.testFrames.get(minIndex).getSelPayload());
-					System.out.print("Expected Responses: ");
-					tfg.testFrames.get(minIndex).printExpectedResponses();
-					System.out.println("\nReturned Response: "+ tfg.testFrames.get(minIndex).getResponseCode());
-					System.out.println("Response Time: "+ tfg.testFrames.get(minIndex).getResponseTime()+" ms");
+					ArrayList<Integer> indexes = new ArrayList<Integer>();
+					indexes.add(maxIndex);
+					indexes.add(minIndex);
+					
+					printTest(tfg, indexes);
 				}else {
 					System.out.println("Nothing found.. (try after calculating statistics)");
 				}
 				Selection = 0;
 				
-			}else if (Selection == 2) {
-				for(int i = 0; i<failedIndexes.size(); i++) {
-					System.out.println("\n----------------------------------------\nurl: "+tfg.testFrames.get(failedIndexes.get(i)).getUrl());
-					if(tfg.testFrames.get(failedIndexes.get(i)).getSelPayload() != "null")
-						System.out.println("payload: "+ tfg.testFrames.get(failedIndexes.get(i)).getSelPayload());
-					System.out.print("Expected Responses: ");
-					tfg.testFrames.get(failedIndexes.get(i)).printExpectedResponses();
-					System.out.println("\nReturned Response: "+ tfg.testFrames.get(failedIndexes.get(i)).getResponseCode());
-					System.out.println("Response Time: "+ tfg.testFrames.get(failedIndexes.get(i)).getResponseTime()+" ms");
-				}
-				Selection = 0;
-				
-			}else if (Selection == 1) {
-				
-				//statistics
-				printStatistics(tfg, tfs, failedIndexes);
-				
-				Selection = 0;
 			}
 			
-			if(Selection == 4) {
-				
+			if(Selection == 5) {
 				break;
 			}
 		}
 	}
+	
+	private void printTest(TestFrameGenerator tfg, ArrayList<Integer> indexes) {
+		for(int i = 0; i<indexes.size(); i++) {
+			System.out.println("\n----------------------------------------\nurl: "+tfg.testFrames.get(indexes.get(i)).getUrl());
+			System.out.println("Method: "+tfg.testFrames.get(indexes.get(i)).getReqType());
+			if(tfg.testFrames.get(indexes.get(i)).getSelPayload() != "null")
+				System.out.println("payload: "+ tfg.testFrames.get(indexes.get(i)).getSelPayload());
+			System.out.print("Expected Responses: ");
+			tfg.testFrames.get(indexes.get(i)).printExpectedResponses();
+			System.out.println("\nReturned Response: "+ tfg.testFrames.get(indexes.get(i)).getResponseCode());
+			System.out.println("Response Time: "+ tfg.testFrames.get(indexes.get(i)).getResponseTime()+" ms");
+		}
+	}
+	
 	
 	private void printStatistics(TestFrameGenerator tfg, ArrayList<Integer> tfs, ArrayList<Integer> failedIndexes) {
 		System.out.println("\n# Test: " + tfs.size());
@@ -170,7 +158,6 @@ public class TestFrameAnalyzer {
 				min = respTimes.get(i);
 				minIndex = tfs.get(i);
 			}
-			
 		}
 		avg = avg/respTimes.size();
 		
@@ -178,10 +165,7 @@ public class TestFrameAnalyzer {
 		System.out.println("- max        "+ max+ " ms");
 		System.out.println("- min        "+ min+ " ms");
 		System.out.println("- avg        "+ avg+ " ms");
-		
-		
 		//System.out.println("\n # test with 0 reponse time: "+ zeroRespIndexes.size());
-		
 	}
 	
 	
