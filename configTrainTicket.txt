@@ -1,6 +1,10 @@
 jsonFile=JsonFilesTrainTicket.txt
-testMode=normalmode
+**testMode=normalmode
+**testMode=quickmode
+testMode=pairwisemode
 logMode=log
 username=admin
 password=222222
+**username=fdse_microservice
+**password=111111
 loginUrl=http://localhost:12340/api/v1/users/login

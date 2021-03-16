@@ -1,3 +1,3 @@
 jsonFile=JsonFilesFtgo.txt
-testMode=normalmode
+testMode=pairwisemode
 logMode=nolog

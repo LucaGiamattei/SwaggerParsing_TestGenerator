@@ -1,11 +1,7 @@
 package main;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -18,10 +14,10 @@ import java.util.Scanner;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
 
 //import dataOperation.OperationalProfileAlterator;
 import parser.TestFrameGenerator;
+import prioritizer.TestFramePrioritizer;
 import analyzer.TestFrameAnalyzer;
 //import selector.AWSSelector;
 //import selector.AWSSelectorWR;
@@ -89,6 +85,13 @@ public class MainReq {
 						}else {
 							System.out.println("\nLogin failed..");
 						}
+					}else if(loginMode.equals("token")) {
+						if(token != null) {
+							System.out.println("\nToken correctly acquired from config file..");
+							//System.out.println("TOKEN: "+token+"\n");
+						}else {
+							System.out.println("\nFailed to get token from config file..");
+						}
 					}
 					
 					//json files reading
@@ -105,6 +108,8 @@ public class MainReq {
 					//quickmode Setting
 					if(testMode.equals("quickmode")) {
 						tfg.setQuickMode(true);
+					}else if(testMode.equals("pairwisemode")) {
+						tfg.setPairWiseMode(true);
 					}
 					
 					System.out.println("\n***************** Parsing files ");
@@ -129,7 +134,8 @@ public class MainReq {
 								System.out.println("\nInsert the number of test to execute (max: "+ tfg.testFrames.size() +")");
 								N_tf = scan.nextInt();
 							}
-														
+							
+							//SELEZIONE TEST							
 							ArrayList<Integer> tfs = new ArrayList<Integer>();
 							Random random = new Random();
 							
@@ -150,6 +156,7 @@ public class MainReq {
 								}
 							}
 							ArrayList<Integer> failedIndexes = new ArrayList<Integer>();
+							ArrayList<Integer> successIndexes = new ArrayList<Integer>();
 							
 							System.out.println("\nRequesting...\n");
 							boolean e = false;
@@ -157,6 +164,7 @@ public class MainReq {
 							int countReset = 0;
 							boolean changeLoading = true;
 							
+							//INVIO RICHIESTE
 							for(int i=0; i<N_tf ;i++){
 								//System.out.println();
 								tfg.testFrames.get(tfs.get(i)).setFinalToken(token);
@@ -174,37 +182,105 @@ public class MainReq {
 								if(!e){
 									failedIndexes.add(tfs.get(i));
 									e = false;
+								}else {
+									successIndexes.add(tfs.get(i));
 								}
 							}
 							System.out.println("\n***************** Requests End");
 							
-							int success = N_tf-failedIndexes.size();
 							System.out.println("\nResults:");
 							System.out.println("Test executed: " + N_tf);
-							System.out.println("Success: " + success);
+							System.out.println("Success: " + successIndexes.size());
 							System.out.println("Failures: " + failedIndexes.size());
 							
-							if(failedIndexes.size() > 0) {
-								Selection = 0;
-								while(Selection == 0) {
-									System.out.println("\nSelect:\n 1) Analyze \n 2) Back to main options");
-									Selection = scan.nextInt();
-									if(Selection < 1 || Selection > 2){Selection = 0;}
+							Selection = 0;
+							while(Selection == 0) {
+								System.out.println("\nSelect:\n 1) Analyzer \n 2) Prioritizer \n 3) Back to main options");
+								Selection = scan.nextInt();
+								if(Selection < 1 || Selection > 3){Selection = 0;}
 			
-									if(Selection == 2) {
-										break;
+								if(Selection == 3) {
+									break;
 										
-									}else if(Selection == 1) {
-										System.out.println("\n***************** Analysis");
+								}else if(Selection == 1) {
+									
+									//ANALISI TEST EFFETTUATI
+									System.out.println("\n***************** Analysis");
 										
-										TestFrameAnalyzer tfa = new TestFrameAnalyzer();
+									TestFrameAnalyzer tfa = new TestFrameAnalyzer();
 										
-										tfa.analyzeTest(tfg, tfs, failedIndexes);
-										//Selection = 0;
+									tfa.analyzeTest(tfg, tfs);
+									
+									Selection = 0;
+									while(Selection == 0) {
+										System.out.println("\nSelect:\n1) Calculate Statistics\n"
+												+ "2) Print failed test ("+failedIndexes.size()+")\n"
+												+ "3) Print success test ("+successIndexes.size()+")\n"
+												+ "4) Print max/min response time test\n"
+												+ "5) Print data to file\n"
+												+ "6) Exit from analyzer");
+										Selection = scan.nextInt();
+										if(Selection < 1 || Selection > 6) {Selection = 0;}
+										
+										else if (Selection == 1) {
+											//statistics
+											tfa.printStatistics(tfg, tfs);
+											Selection = 0;
+											
+										}else if (Selection == 2) {
+											tfa.printTest(tfg, failedIndexes);
+											Selection = 0;
+											
+										}else if (Selection == 3) {
+											tfa.printTest(tfg, successIndexes);
+											Selection = 0;
+											
+										}else if(Selection == 4) {
+											//stampa min max	
+											tfa.printMinMax(tfg);
+											Selection = 0;
+											
+										}else if(Selection == 5) {
+											tfa.printTestToFile(tfg, tfs);
+											Selection = 0;
+											
+										}else if(Selection == 6) {
+											break;
+										}
 									}
+									Selection = 0;
+
+								}else if(Selection == 2) {
+									//PRIORITIZZAZIONE TEST EFFETTUATI
+									System.out.println("\n***************** Prioritization");
+									
+									TestFramePrioritizer tfp = new TestFramePrioritizer();
+									
+									Selection = 0;
+									while(Selection == 0) {
+										System.out.println("\nSelect:\n1) Calculate Weights\n"
+												+ "2) Print Weights \n"
+												+ "3) Exit from Prioritizer");
+										Selection = scan.nextInt();
+										if(Selection < 1 || Selection > 3) {Selection = 0;}
+										
+										else if (Selection == 1) {
+											TestFrameAnalyzer tfa = new TestFrameAnalyzer();
+											tfa.analyzeTest(tfg, tfs);
+											tfp.calculateWeights(tfa);
+											Selection = 0;
+										}else if (Selection == 2) {
+											tfp.printWeights();
+											Selection = 0;
+		
+										}else if(Selection == 3) {
+											break;
+										}
+									}
+									Selection = 0;
 								}
-								Selection = 0;
 							}
+							
 							Selection = 0;
 						}
 						
@@ -222,7 +298,6 @@ public class MainReq {
 			}
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -242,7 +317,8 @@ public class MainReq {
 	        Scanner myReader = new Scanner(myObj);
 	        while (myReader.hasNextLine()) {
 	          String data = myReader.nextLine();
-	          jsonFiles.add(data);
+	          if(!data.contains("**"))
+	        	  jsonFiles.add(data);
 	        }
 	        myReader.close();
 	      } catch (Exception e) {
@@ -285,12 +361,13 @@ public class MainReq {
 	
 				while ((inputLine = in.readLine()) != null) {
 					response.append(inputLine);
+					
 				}
+				//System.out.println("\n[INFO] Login Response: " + response);
 				in.close();
 			}
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 	        System.out.println("\n[ERROR] Login: Connection problem.");
 		} finally {
 			if (con != null) {
@@ -320,7 +397,8 @@ public class MainReq {
 	        Scanner myReader = new Scanner(myObj);
 	        while (myReader.hasNextLine()) {
 	          String data = myReader.nextLine();
-	          configParameters.add(data);
+	          if(!data.contains("**"))
+	        	  configParameters.add(data);
 	        }
 	        myReader.close();
 	      } catch (Exception e) {
@@ -338,17 +416,19 @@ public class MainReq {
 			//jsonsFile parsing
 			jsonsFile = configParameters.get(0).split("=")[1];
 			testMode = configParameters.get(1).split("=")[1];
-			if(testMode.equals("quickmode") || testMode.equals("normalmode")) {
+			if(testMode.equals("quickmode") || testMode.equals("normalmode") || testMode.equals("pairwisemode")) {
 				loginMode = configParameters.get(2).split("=")[1];
-				if(loginMode.equals("log") || loginMode.equals("nolog")) {
+				if(loginMode.equals("log") || loginMode.equals("nolog")|| loginMode.equals("token")) {
 					if(loginMode.equals("log")) {
 						username = configParameters.get(3).split("=")[1];
 						password = configParameters.get(4).split("=")[1];
 						loginUrl = configParameters.get(5).split("=")[1];
+					}else if(loginMode.equals("token")) {
+						token = configParameters.get(3).split("=")[1];
 					}
 					returnVal = true;
-				}
-			}
+				}else {System.out.println("[ERROR] Configuration parsing: Wrong logMode");}
+			}else{System.out.println("[ERROR] Configuration parsing: Wrong testMode");}
 		}
 		
 		return returnVal;

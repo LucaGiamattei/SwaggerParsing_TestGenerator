@@ -2,7 +2,9 @@ package dataStructure;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Scanner;
+import java.util.TimeZone;
 import java.util.concurrent.ThreadLocalRandom;
 import java.awt.Toolkit;
 import java.io.BufferedReader;
@@ -10,7 +12,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
@@ -30,9 +34,10 @@ public class TestFrame{
 
 	//inputClass
 	public ArrayList<InputClass> ic = new ArrayList<InputClass>();
+	
+	public ArrayList<ArrayList<InputClass>> ref = new ArrayList<ArrayList<InputClass>>();
 	//Risposte attese
 	public ArrayList<Integer> expectedResponses = new ArrayList<Integer>();
-
 	
 	//per le richieste di tipo POST
 	private String payload;
@@ -49,11 +54,17 @@ public class TestFrame{
 	private int time=1000;
 
 	private String finalToken;
+	
+	private String state;
+	private int priority;
+	private int failureSeverity;
 
 	public TestFrame(boolean debug) {
 		super();
 		//testCases = new ArrayList<TestCase>();
 		finalToken="";
+		state = "NotDefined";
+		priority = 0;
 	}
 
 	public TestFrame(String _name, String _tfID, String _reqType, String _payload, boolean debug) {
@@ -64,6 +75,9 @@ public class TestFrame{
 		this.payload= _payload;
 		finalToken="";
 		DEBUG_MODE= debug;
+		state = "NotDefined";
+		priority = 0;
+		failureSeverity = 0;
 	}
 
 	public TestFrame(String _name, String _tfID, double _failureProb, double _occurrenceProb, boolean debug) {
@@ -74,6 +88,9 @@ public class TestFrame{
 		this.occurrenceProb = _occurrenceProb;
 		finalToken="";
 		DEBUG_MODE= debug;
+		state = "NotDefined";
+		priority = 0;
+		failureSeverity = 0;
 	}
 
 
@@ -98,6 +115,9 @@ public class TestFrame{
 		this.payload = _payload;
 		finalToken="";
 		DEBUG_MODE= debug;
+		state = "NotDefined";
+		priority = 0;
+		failureSeverity = 0;
 	}
 
 	// HTTP GET request
@@ -366,6 +386,7 @@ public class TestFrame{
 			}  else {
 				//System.out.println("\n[ERROR] Metodo non implementato: " + this.reqType);
 				responseCode = -2;
+				state = "failed";
 				return false;
 			}
 
@@ -376,17 +397,30 @@ public class TestFrame{
 				System.out.println(e);
 			}
 			responseCode = -1;
+			state = "failed";
+			failureSeverity = 0;
 			return false;
 			
 		} catch (Exception e) {
 			if(DEBUG_MODE) 
 			System.out.println(e);
 			
-			boolean returnValue = false; 
+			state = "failed";
+			boolean returnValue = false;
+			
 			for(int i = 0; i < expectedResponses.size(); i++) {
-				if(responseCode == expectedResponses.get(i))
+				if(responseCode == expectedResponses.get(i)) {
 					returnValue = true;
+					state = "success";
+				}
 			}
+			
+			if(state.equals("failed") && responseCode>=500) {
+				failureSeverity = 2;
+			}else if(state.equals("failed")){
+				failureSeverity = 1;
+			}
+			
 			if(DEBUG_MODE) {
 				if(returnValue){
 					System.out.println("[DEBUG] ExceptionHandler expected response: "+ responseCode);
@@ -397,13 +431,25 @@ public class TestFrame{
 					System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
 				}
 			}
+			
 			return returnValue;
 		}
 		
-		boolean returnValue = false; 
+		//noException
+		boolean returnValue = false;
+		state = "failed";
+		
 		for(int i = 0; i < expectedResponses.size(); i++) {
-			if(responseCode == expectedResponses.get(i))
+			if(responseCode == expectedResponses.get(i)) {
 				returnValue = true;
+				state = "success";
+			}
+		}
+		
+		if(state.equals("failed") && responseCode>=500) {
+			failureSeverity = 2;
+		}else if(state.equals("failed")){
+			failureSeverity = 1;
 		}
 		
 		if(DEBUG_MODE) {
@@ -434,6 +480,28 @@ public class TestFrame{
 			//System.out.println("[DEBUG] nome parametro: "+ this.ic.get(i).name +" tipo: "+ this.ic.get(i).type);
 			
 			switch(type){
+			case "float":  sel = String.valueOf(ThreadLocalRandom.current().nextFloat());
+			break;
+			
+			case "double":  sel = String.valueOf(ThreadLocalRandom.current().nextDouble());
+			break;
+			
+			case "int32":  sel = String.valueOf(ThreadLocalRandom.current().nextInt());
+			break;
+			
+			case "int64":  sel = String.valueOf(ThreadLocalRandom.current().nextLong());
+			break;
+			
+			case "date": sel = String.valueOf(LocalDate.now());
+			break;
+			
+			case "date-time": 
+				TimeZone tz = TimeZone.getTimeZone("UTC");
+				DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"); 
+				df.setTimeZone(tz);
+				sel = df.format(new Date());
+			break;
+			
 			case "range":  sel = String.valueOf(ThreadLocalRandom.current().nextInt(Integer.parseInt(this.ic.get(i).min), Integer.parseInt(this.ic.get(i).max)));
 			break;
 
@@ -463,9 +531,6 @@ public class TestFrame{
 
 			case "n_greater" :	sel = RandomStringUtils.randomNumeric(Integer.parseInt(this.ic.get(i).min));
 			break;
-
-			case "value": sel = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
-			break;
 			
 			case "b_true": sel = "true";
 			break;
@@ -478,7 +543,9 @@ public class TestFrame{
 				sel = languages[ThreadLocalRandom.current().nextInt(0, languages.length-1)];
 				break; 
 
-			default: sel = "error";
+			default: 
+				System.out.println("[ERROR] Type \""+type+"\" of IC not implemented, put \"error\" string in place..");				
+				sel = "error";
 			break;
 			}
 
@@ -542,6 +609,13 @@ public class TestFrame{
 	public String getPayload() {
 		return payload;
 	}
+	
+	public String getState() {
+		return state;
+	}
+	public int getFailureSeverity() {
+		return failureSeverity;
+	}
 
 	public void setPayload(String payload) {
 		this.payload = payload;
@@ -583,6 +657,18 @@ public class TestFrame{
 	public void printExpectedResponses() {
 		for(int i=0; i<expectedResponses.size(); i++) {
 			System.out.printf(expectedResponses.get(i)+" ");
+		}
+	}
+	
+	public void printValidCombination() {
+		System.out.printf("Valid/nonValid combination: ");
+		for(int i=0; i<ic.size(); i++) {
+			if(ic.get(i).valid) { 
+				System.out.printf(" V");
+			}else {
+				System.out.printf(" NV");
+
+			}
 		}
 	}
 	
