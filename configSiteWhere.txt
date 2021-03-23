@@ -1,9 +1,30 @@
+********************* POSSIBLE CONFIGURATIONS
+**	
+**	jsonFile=<name of the file with json names for parsing>
+**	testMode=<normalmode,quickmode,pairwisemode>
+**	priorityMode=<allfailure,onlysevere>
+**	logMode=<log,nolog,token>
+**	
+**	ATT - with "logMode=log" you need to specify:
+**		username=<username>
+**		password=<password>
+**		loginUrl=<api url to forward login request>
+**	    - with "logMode=log" you need to specify:
+**		token=<authentication token>
+**	
+**	OSS - when "**" is found the line is ignored
+**	    - the order of the parameter is important
+**
+**
+**
 jsonFile=JsonFilesSiteWhere.txt
-**testMode=normalmode
-**testMode=quickmode
 testMode=pairwisemode
+priorityMode=onlysevere
 logMode=token
-token=eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJzaXRld2hlcmUiLCJzdWIiOiJhZG1pbiIsImlhdCI6MTYxNTgzNjg1NSwiZXhwIjoxNjE1ODQwNDU1LCJhdXRoIjpbIlZJRVdfU0VSVkVSX0lORk8iLCJSRVNUIiwiQURNSU5fQ09OU09MRSIsIkFETUlOSVNURVJfVVNFUlMiLCJBRE1JTklTVEVSX1VTRVJfU0VMRiIsIkFETUlOSVNURVJfVEVOQU5UUyIsIkFETUlOSVNURVJfVEVOQU5UX1NFTEYiLCJBRE1JTklTVEVSX1NDSEVEVUxFUyIsIlNDSEVEVUxFX0NPTU1BTkRTIl19.n6LzBwzH0WoRA39w8_NY27dvFAWU4fFlGL3YEYSxGDHOem082k5oFjSIrEVhaUlSGLxXLU3GDPhRuJdPICl7lQ
+token=eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJzaXRld2hlcmUiLCJzdWIiOiJhZG1pbiIsImlhdCI6MTYxNjA2NDY1MywiZXhwIjoxNjE2MDY4MjUzLCJhdXRoIjpbIlZJRVdfU0VSVkVSX0lORk8iLCJSRVNUIiwiQURNSU5fQ09OU09MRSIsIkFETUlOSVNURVJfVVNFUlMiLCJBRE1JTklTVEVSX1VTRVJfU0VMRiIsIkFETUlOSVNURVJfVEVOQU5UUyIsIkFETUlOSVNURVJfVEVOQU5UX1NFTEYiLCJBRE1JTklTVEVSX1NDSEVEVUxFUyIsIlNDSEVEVUxFX0NPTU1BTkRTIl19.Sh20Jp-ns1YeyDRJBypEqRezhlLbzZ4Y_j548DgQv-2061GUyyZNPBnH8hIWmNs9LlGXTlmdPqkysmEufTqVaA
+**
+**
+**
 **username=admin
 **password=password
 **loginUrl=http://localhost:8080/sitewhere/authapi

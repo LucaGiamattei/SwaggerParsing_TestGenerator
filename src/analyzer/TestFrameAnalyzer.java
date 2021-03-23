@@ -9,15 +9,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
+import dataStructure.TestFrame;
 import parser.TestFrameGenerator;
 
 public class TestFrameAnalyzer {
 	public static final int TOTAL_INDEX = 0;
 	public static final int FAILURE_INDEX = 1;
 	public static final int SEVERE_FAILURE_INDEX = 2;
-	public static final int FIELDS_NUM = 16;
+	
 	
 	public static final ArrayList<String> names = new ArrayList<String>(Arrays.asList("payload","date","dateTime","int32","int64","float","double","empty","range","symbol","greater","lower","bTrue","bFalse","sRange","lang"));
+	public static final int FIELDS_NUM = 16;
 	public static final int PAYLOAD_IDX = 0;
 	public static final int DATE_IDX= 1;
 	public static final int DATETIME_IDX= 2;
@@ -82,23 +84,22 @@ public class TestFrameAnalyzer {
 		
 	}
 	
-	public void analyzeTest(TestFrameGenerator tfg, ArrayList<Integer> tfs) {		
+	public void analyzeTest(ArrayList<TestFrame> testFrames, ArrayList<Integer> tfs) {		
 		avg = 0;
 		max = 0;
-		min = tfg.testFrames.get(tfs.get(0)).getResponseTime();
+		min = testFrames.get(tfs.get(0)).getResponseTime();
 		
 		//SCANNING
 		//ciclo su tutti i testframe "scelti" nel dataset completo di tfg
 		for(int i = 0; i < tfs.size(); i++) {
 			
-			String method = tfg.testFrames.get(tfs.get(i)).getReqType();
-			int code = tfg.testFrames.get(tfs.get(i)).getResponseCode();
+			String method = testFrames.get(tfs.get(i)).getReqType();
+			int code = testFrames.get(tfs.get(i)).getResponseCode();
 			
 			ArrayList<Boolean> hasFieldB = new ArrayList<Boolean>();
 			for(int x=0;x<FIELDS_NUM;x++) {
 				hasFieldB.add(false);
 			}
-	    	//boolean hasDate= false,hasDateTime= false,hasInt32= false,hasInt64= false,hasFloat= false,hasDouble= false,hasEmpty= false, hasRange= false, hasSymbol= false, hasGreater= false, hasLower= false, hasBTrue= false, hasBFalse= false, hasSRange= false, hasLang = false;
 
 			
 			//METODI
@@ -115,12 +116,12 @@ public class TestFrameAnalyzer {
 			}
 			
 			
-			if(tfg.testFrames.get(tfs.get(i)).getPayload() != null) {
+			if(testFrames.get(tfs.get(i)).getPayload() != null) {
 				 hasFieldB.set(PAYLOAD_IDX,true);
 			}
 			//ciclo su ogni ic per sapere i fields presenti
-			for(int j = 0; j<tfg.testFrames.get(tfs.get(i)).ic.size(); j++) {
-				String typeTemp = tfg.testFrames.get(tfs.get(i)).ic.get(j).type;
+			for(int j = 0; j<testFrames.get(tfs.get(i)).ic.size(); j++) {
+				String typeTemp = testFrames.get(tfs.get(i)).ic.get(j).type;
 	    		  
 				if(typeTemp.equals("date")) hasFieldB.set(DATE_IDX,true);
 				else if(typeTemp.equals("date-time")) hasFieldB.set(DATETIME_IDX,true);
@@ -142,9 +143,9 @@ public class TestFrameAnalyzer {
 			
 			
 			//CASO FALLIMENTO
-			if(tfg.testFrames.get(tfs.get(i)).getState().equals("failed")) {
+			if(testFrames.get(tfs.get(i)).getState().equals("failed")) {
 				
-				int severityT = tfg.testFrames.get(tfs.get(i)).getFailureSeverity();	//la severity ha senso solo in caso di fallimento
+				int severityT = testFrames.get(tfs.get(i)).getFailureSeverity();	//la severity ha senso solo in caso di fallimento
 				
 				//CODICI FALLIMENTI
 				if(codes.contains(code)) {
@@ -165,10 +166,10 @@ public class TestFrameAnalyzer {
 				}
 				
 				//aggiorno count metodo fallito
-				if(tfg.testFrames.get(tfs.get(i)).getResponseCode() != -1 && tfg.testFrames.get(tfs.get(i)).getResponseCode() != -2) {
+				if(testFrames.get(tfs.get(i)).getResponseCode() != -1 && testFrames.get(tfs.get(i)).getResponseCode() != -2) {
 					ArrayList<Integer> counts = new ArrayList<Integer>(methodCount.get(method));
 					counts.set(FAILURE_INDEX,counts.get(FAILURE_INDEX)+1);
-					if(tfg.testFrames.get(tfs.get(i)).getFailureSeverity() == 2) {
+					if(testFrames.get(tfs.get(i)).getFailureSeverity() == 2) {
 						counts.set(SEVERE_FAILURE_INDEX,counts.get(SEVERE_FAILURE_INDEX)+1);
 					}
 					methodCount.put(method, counts);
@@ -177,7 +178,7 @@ public class TestFrameAnalyzer {
 				for(int j=0; j<FIELDS_NUM; j++) {
 					if(hasFieldB.get(j)) {
 						hasFieldCount.get(j).set(FAILURE_INDEX,hasFieldCount.get(j).get(FAILURE_INDEX)+1);
-						if(tfg.testFrames.get(tfs.get(i)).getFailureSeverity() == 2) {
+						if(testFrames.get(tfs.get(i)).getFailureSeverity() == 2) {
 							hasFieldCount.get(j).set(SEVERE_FAILURE_INDEX,hasFieldCount.get(j).get(SEVERE_FAILURE_INDEX)+1);
 						}
 					}
@@ -198,7 +199,7 @@ public class TestFrameAnalyzer {
 
 			
 			//TEMPI DI RISPOSTA
-			respTimes.add(tfg.testFrames.get(tfs.get(i)).getResponseTime());
+			respTimes.add(testFrames.get(tfs.get(i)).getResponseTime());
 			
 			avg +=  respTimes.get(i);
 			if(respTimes.get(i) > max) {
@@ -206,7 +207,7 @@ public class TestFrameAnalyzer {
 				maxIndex = tfs.get(i);
 			}
 			
-			if(respTimes.get(i) < min && tfg.testFrames.get(tfs.get(i)).getResponseCode() > 0) {
+			if(respTimes.get(i) < min && testFrames.get(tfs.get(i)).getResponseCode() > 0) {
 				min = respTimes.get(i);
 				minIndex = tfs.get(i);
 			}
@@ -216,16 +217,17 @@ public class TestFrameAnalyzer {
 		
 	}
 	
-	public void printTest(TestFrameGenerator tfg, ArrayList<Integer> indexes) {
+	public void printTest(ArrayList<TestFrame> testFrames, ArrayList<Integer> indexes) {
 		for(int i = 0; i<indexes.size(); i++) {
-			System.out.println("\n----------------------------------------\nurl: "+tfg.testFrames.get(indexes.get(i)).getUrl());
-			System.out.println("Method: "+tfg.testFrames.get(indexes.get(i)).getReqType());
-			if(tfg.testFrames.get(indexes.get(i)).getSelPayload() != "null")
-				System.out.println("payload: "+ tfg.testFrames.get(indexes.get(i)).getSelPayload());
+			System.out.println("\n----------------------------------------\nurl: "+testFrames.get(indexes.get(i)).getUrl());
+			System.out.println("Method: "+testFrames.get(indexes.get(i)).getReqType());
+			if(testFrames.get(indexes.get(i)).getSelPayload() != "null")
+				System.out.println("payload: "+ testFrames.get(indexes.get(i)).getSelPayload());
 			System.out.print("Expected Responses: ");
-			tfg.testFrames.get(indexes.get(i)).printExpectedResponses();
-			System.out.println("\nReturned Response: "+ tfg.testFrames.get(indexes.get(i)).getResponseCode());
-			System.out.println("Response Time: "+ tfg.testFrames.get(indexes.get(i)).getResponseTime()+" ms");
+			testFrames.get(indexes.get(i)).printExpectedResponses();
+			System.out.println("\nReturned Response: "+ testFrames.get(indexes.get(i)).getResponseCode());
+			System.out.println("Response Time: "+ testFrames.get(indexes.get(i)).getResponseTime()+" ms");
+			System.out.println("Priority: " + testFrames.get(i).getPriority());
 		}
 	}
 	

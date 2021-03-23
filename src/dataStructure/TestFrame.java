@@ -56,14 +56,14 @@ public class TestFrame{
 	private String finalToken;
 	
 	private String state;
-	private int priority;
+	private float priority;
 	private int failureSeverity;
 
 	public TestFrame(boolean debug) {
 		super();
 		//testCases = new ArrayList<TestCase>();
 		finalToken="";
-		state = "NotDefined";
+		state = "notdefined";
 		priority = 0;
 	}
 
@@ -75,7 +75,7 @@ public class TestFrame{
 		this.payload= _payload;
 		finalToken="";
 		DEBUG_MODE= debug;
-		state = "NotDefined";
+		state = "notdefined";
 		priority = 0;
 		failureSeverity = 0;
 	}
@@ -88,7 +88,7 @@ public class TestFrame{
 		this.occurrenceProb = _occurrenceProb;
 		finalToken="";
 		DEBUG_MODE= debug;
-		state = "NotDefined";
+		state = "notdefined";
 		priority = 0;
 		failureSeverity = 0;
 	}
@@ -115,7 +115,7 @@ public class TestFrame{
 		this.payload = _payload;
 		finalToken="";
 		DEBUG_MODE= debug;
-		state = "NotDefined";
+		state = "notdefined";
 		priority = 0;
 		failureSeverity = 0;
 	}
@@ -615,6 +615,14 @@ public class TestFrame{
 	}
 	public int getFailureSeverity() {
 		return failureSeverity;
+	}
+	
+	public float getPriority() {
+		return priority;
+	}
+	
+	public void setPriority(float p) {
+		this.priority = p;
 	}
 
 	public void setPayload(String payload) {

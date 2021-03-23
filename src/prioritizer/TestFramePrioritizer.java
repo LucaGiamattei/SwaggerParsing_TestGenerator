@@ -1,127 +1,268 @@
 package prioritizer;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
 import analyzer.TestFrameAnalyzer;
+import dataStructure.TestFrame;
 import parser.TestFrameGenerator;
 
 public class TestFramePrioritizer {
 	
+	public static boolean ONLY_SEVERE = true;
+	
 	private HashMap<String, Float> methodWeights;
-	private HashMap<String, Float> severityMethodModificators;
+	private HashMap<String, Float> methodOnlySevereWeights;
 	
 	private ArrayList<Float> fieldWeights;
-	private ArrayList<Float> severityFieldModificators;
+	private ArrayList<Float> fieldOnlySevereWeights;
 
 
 	
 	
 	public TestFramePrioritizer() {
 		super();
+		
 		methodWeights = new  HashMap<String, Float>();
-		severityMethodModificators = new  HashMap<String, Float>();
+		methodOnlySevereWeights = new  HashMap<String, Float>();
 		
 		fieldWeights = new  ArrayList<Float>();
-		severityFieldModificators = new  ArrayList<Float>();
+		fieldOnlySevereWeights = new  ArrayList<Float>();
 		
 		for(int i=0;i<TestFrameAnalyzer.FIELDS_NUM;i++) {
 			fieldWeights.add((float)0);
 		}
-		for(int i=0;i<TestFrameAnalyzer.FIELDS_NUM;i++) {
-			severityFieldModificators.add((float)0);
-		}
 		
+		for(int i=0;i<TestFrameAnalyzer.FIELDS_NUM;i++) {
+			fieldOnlySevereWeights.add((float)0);
+		}
 	}
 	
+	public TestFramePrioritizer(boolean onlySevere) {
+		super();
+		
+		methodWeights = new  HashMap<String, Float>();
+		methodOnlySevereWeights = new  HashMap<String, Float>();
+		
+		fieldWeights = new  ArrayList<Float>();
+		fieldOnlySevereWeights = new  ArrayList<Float>();
+		
+		for(int i=0;i<TestFrameAnalyzer.FIELDS_NUM;i++) {
+			fieldWeights.add((float)0);
+		}
+		
+		for(int i=0;i<TestFrameAnalyzer.FIELDS_NUM;i++) {
+			fieldOnlySevereWeights.add((float)0);
+		}
+		
+		ONLY_SEVERE = onlySevere;
+	}
 	
 	
 	public void calculateWeights(TestFrameAnalyzer tfa) {
 		
 		for(Map.Entry<String, ArrayList<Integer>>  method : tfa.methodCount.entrySet()) {
 			float weight = 0;
-			float modificator = 0;
-			
-			if(method.getValue().get(TestFrameAnalyzer.FAILURE_INDEX) != 0)
-				modificator = (float)method.getValue().get(TestFrameAnalyzer.SEVERE_FAILURE_INDEX)/method.getValue().get(TestFrameAnalyzer.FAILURE_INDEX);
-			
-			severityMethodModificators.put(method.getKey(),modificator);
-			
-			if(method.getValue().get(TestFrameAnalyzer.TOTAL_INDEX) != 0)
-				weight = (float)method.getValue().get(TestFrameAnalyzer.FAILURE_INDEX)/method.getValue().get(TestFrameAnalyzer.TOTAL_INDEX)*modificator;
-			
+			float onlySevereWeight = 0;
+
+			if(method.getValue().get(TestFrameAnalyzer.TOTAL_INDEX) != 0) {
+				onlySevereWeight = (float)method.getValue().get(TestFrameAnalyzer.SEVERE_FAILURE_INDEX)/method.getValue().get(TestFrameAnalyzer.TOTAL_INDEX);
+				weight = (float)method.getValue().get(TestFrameAnalyzer.FAILURE_INDEX)/method.getValue().get(TestFrameAnalyzer.TOTAL_INDEX);
+			}
+
 			methodWeights.put(method.getKey(),weight);
+			methodOnlySevereWeights.put(method.getKey(),onlySevereWeight);
 		}
 		
 		
 		
 		for(int i = 0;i< TestFrameAnalyzer.FIELDS_NUM; i++) {
-			float modificator = 0;
-			
-			if(tfa.hasFieldCount.get(i).get(TestFrameAnalyzer.FAILURE_INDEX) != 0) {
-				modificator = (float)tfa.hasFieldCount.get(i).get(TestFrameAnalyzer.SEVERE_FAILURE_INDEX)/tfa.hasFieldCount.get(i).get(TestFrameAnalyzer.FAILURE_INDEX);
-				severityFieldModificators.set(i,modificator);
-			}
-			
 			if(tfa.hasFieldCount.get(i).get(TestFrameAnalyzer.TOTAL_INDEX) != 0) {
-				fieldWeights.set(i,(float)tfa.hasFieldCount.get(i).get(TestFrameAnalyzer.FAILURE_INDEX)/tfa.hasFieldCount.get(i).get(TestFrameAnalyzer.TOTAL_INDEX)*modificator);
+				fieldOnlySevereWeights.set(i,(float)tfa.hasFieldCount.get(i).get(TestFrameAnalyzer.SEVERE_FAILURE_INDEX)/tfa.hasFieldCount.get(i).get(TestFrameAnalyzer.TOTAL_INDEX));
+				fieldWeights.set(i,(float)tfa.hasFieldCount.get(i).get(TestFrameAnalyzer.FAILURE_INDEX)/tfa.hasFieldCount.get(i).get(TestFrameAnalyzer.TOTAL_INDEX));				
 			}
 		}
 		
-		System.out.println();
+		//System.out.println();
 		
+		/*
 		for(Map.Entry<String, ArrayList<Integer>>  method : tfa.methodCount.entrySet()) {
-			System.out.println("[INFO]	"+method.getKey() +" (total,failure): ("+ method.getValue().get(TestFrameAnalyzer.TOTAL_INDEX)+","+method.getValue().get(TestFrameAnalyzer.FAILURE_INDEX)+")");
-			System.out.println("[INFO]	Severity modificator: " + severityMethodModificators.get(method.getKey())+"\n");
+			System.out.println("[INFO]	"+method.getKey() +" (#total,#failure): ("+ method.getValue().get(TestFrameAnalyzer.TOTAL_INDEX)+","+method.getValue().get(TestFrameAnalyzer.FAILURE_INDEX)+")");
 		}
 
 		for(int i = 0;i< TestFrameAnalyzer.FIELDS_NUM; i++) {
-			System.out.println("[INFO]	"+TestFrameAnalyzer.names.get(i) + " (total,failure): ("+tfa.hasFieldCount.get(i).get(TestFrameAnalyzer.TOTAL_INDEX)+","+tfa.hasFieldCount.get(i).get(TestFrameAnalyzer.FAILURE_INDEX)+")");
-			System.out.println("[INFO]	Severity modificator: " + severityFieldModificators.get(i)+"\n");
+			System.out.println("[INFO]	"+TestFrameAnalyzer.names.get(i) + " (#total,#failure): ("+tfa.hasFieldCount.get(i).get(TestFrameAnalyzer.TOTAL_INDEX)+","+tfa.hasFieldCount.get(i).get(TestFrameAnalyzer.FAILURE_INDEX)+")");
 		}
-		
+		*/
+		//printWeights();
 		
 		
 	}
+
+	public void prioritizeTest(ArrayList<TestFrame> testFrames) {
+		
+		for (int i=0; i<testFrames.size(); i++) {
+			
+			ArrayList<Integer> hasFieldB = new ArrayList<Integer>();
+			int hasWeightenedMethod = 0;
+			int hasFieldCount = 0;
+			
+			for(int x=0;x<TestFrameAnalyzer.FIELDS_NUM;x++) {
+				hasFieldB.add(0);
+			}
+			
+			for(int j = 0; j<testFrames.get(i).ic.size(); j++) {
+				String typeTemp = testFrames.get(i).ic.get(j).type;
+	    		  
+				if(typeTemp.equals("date")) hasFieldB.set(TestFrameAnalyzer.DATE_IDX,1);
+				else if(typeTemp.equals("date-time")) hasFieldB.set(TestFrameAnalyzer.DATETIME_IDX,1);
+				else if(typeTemp.equals("int32")) hasFieldB.set(TestFrameAnalyzer.INT32_IDX,1);
+				else if(typeTemp.equals("int64")) hasFieldB.set(TestFrameAnalyzer.INT64_IDX,1);
+				else if(typeTemp.equals("float")) hasFieldB.set(TestFrameAnalyzer.FLOAT_IDX,1);
+				else if(typeTemp.equals("double")) hasFieldB.set(TestFrameAnalyzer.DOUBLE_IDX,1);
+				else if(typeTemp.equals("empty")) hasFieldB.set(TestFrameAnalyzer.EMPTY_IDX,1);
+				else if(typeTemp.equals("range")) hasFieldB.set(TestFrameAnalyzer.RANGE_IDX,1);
+				else if(typeTemp.equals("symbol")) hasFieldB.set(TestFrameAnalyzer.SYMBOL_IDX,1);
+				else if(typeTemp.equals("greater")) hasFieldB.set(TestFrameAnalyzer.GREATER_IDX,1);
+				else if(typeTemp.equals("lower")) hasFieldB.set(TestFrameAnalyzer.LOWER_IDX,1);
+				else if(typeTemp.equals("b_true")) hasFieldB.set(TestFrameAnalyzer.BTRUE_IDX,1);
+				else if(typeTemp.equals("b_false")) hasFieldB.set(TestFrameAnalyzer.BFALSE_IDX,1);
+				else if(typeTemp.equals("s_range")) hasFieldB.set(TestFrameAnalyzer.SRANGE_IDX,1);
+				else if(typeTemp.equals("lang")) hasFieldB.set(TestFrameAnalyzer.LANG_IDX,1);
+			}
+			
+			float  beforeNormalizationPriority = 0;
+			
+			if(ONLY_SEVERE) {
+				for(Map.Entry<String, Float>  method : methodOnlySevereWeights.entrySet()) {
+					if(testFrames.get(i).getReqType().equals(method.getKey())) {
+						beforeNormalizationPriority += method.getValue();
+						hasWeightenedMethod ++;
+					}
+				}
+				
+				for(int x=0; x < fieldOnlySevereWeights.size(); x++) {
+					beforeNormalizationPriority += hasFieldB.get(x) * fieldOnlySevereWeights.get(x);
+					if(hasFieldB.get(x) == 1)
+						hasFieldCount++;
+				}
+				
+			}else {
+				for(Map.Entry<String, Float>  method : methodWeights.entrySet()) {
+					if(testFrames.get(i).getReqType().equals(method.getKey())) {
+						beforeNormalizationPriority += method.getValue();
+						hasWeightenedMethod ++;
+					}
+				}
+				
+				for(int x=0; x < fieldWeights.size(); x++) {
+					beforeNormalizationPriority += hasFieldB.get(x) * fieldWeights.get(x);
+					if(hasFieldB.get(x) == 1)
+						hasFieldCount++;
+				}
+			}
+			
+			
+			
+			float normalizedPriority = beforeNormalizationPriority/(hasWeightenedMethod+hasFieldCount);
+			
+			/*if(i<10) {
+				System.out.println("[INFO]	Priority assigned to "+tfg.testFrames.get(i).getName()+" - "+tfg.testFrames.get(i).getReqType()+" : ");
+				System.out.println("[INFO]		Before normalization: " + beforeNormalizationPriority);
+				//System.out.println("[INFO]		Method count (must be 1): " + hasWeightenedMethod);
+				//System.out.println("[INFO]		Field count: " + hasFieldCount);
+				System.out.println("[INFO]		After normalization: " + normalizedPriority);
+				System.out.println();
+			}*/
+
+			testFrames.get(i).setPriority(normalizedPriority);
+			
+		}
+	}
 	
-	public void getWeightsFromFile(TestFrameGenerator tfg, String fileToRead) {
+	
+	
+	//DA MODIFICARE PER SEVERE
+	public void printWeights() {
+		System.out.println("\n[INFO]	Weights: \n");
+		for(Map.Entry<String, Float>  method : methodWeights.entrySet()) {
+			System.out.println("[INFO]	"+method.getKey() +" (allFailure, onlySevere): ("+ method.getValue()+", "+methodOnlySevereWeights.get(method.getKey())+")");
+		}
+		for(int i = 0;i< fieldWeights.size(); i++) {
+			System.out.println("[INFO]	"+TestFrameAnalyzer.names.get(i) +" (allFailure, onlySevere): ("+ fieldWeights.get(i)+", "+fieldOnlySevereWeights.get(i)+")");
+		}
+	}
+	
+	
+	
+	public void getWeightsFromFile(String fileToRead) {
 		
 		try {
-			File myObj = new File(fileToRead);
-			Scanner myReader = new Scanner(myObj);
-			while (myReader.hasNextLine()) {
-				String data = myReader.nextLine();
-				if(!data.contains("**")) {
-					//NON COMPLETA
-				}	
-			}
-			myReader.close();
-		} catch (Exception e) {
-			System.out.println("[ERROR] Json retrieval: File read failed.");
-		}
+	        File myObj = new File(fileToRead);
+	        Scanner myReader = new Scanner(myObj);
+	        int index = 0;
+	        
+	        while (myReader.hasNextLine()) {
+	          String data = myReader.nextLine();
+	          String[] splittedBothWeights = data.split(";");
+	          String[] splittedWeight = splittedBothWeights[0].split("=");
+	          String[] splittedOnlySevereWeight = splittedBothWeights[1].split("=");
+	          String name = splittedWeight[0];
+	          String weight = splittedWeight[1];
+	          String weightOnlySevere = splittedOnlySevereWeight[1];
+	          
+	          if(!data.contains("**")) {
+	        	  if (!TestFrameAnalyzer.names.contains(name)){
+	        		  methodWeights.put(name,Float.parseFloat(weight));
+	        		  methodOnlySevereWeights.put(name,Float.parseFloat(weightOnlySevere));
+	        	  }else {
+	        		  fieldWeights.set(index, Float.parseFloat(weight));
+	        		  fieldOnlySevereWeights.set(index, Float.parseFloat(weightOnlySevere));
+	        		  index++;
+	        	  }
+	          }
+	        }
+	        myReader.close();
+	      } catch (Exception e) {
+	    	  System.out.println("[ERROR] GetWeightsFromFile: File read failed.");
+	      }
 	}
 	
 	
-	
-	public void prioritizeTest(TestFrameGenerator tfg) {
+	public void printWeightsToFile(String fileToWrite) {
 		
+		try {
+		      FileWriter myWriter = new FileWriter(fileToWrite); 
+		      BufferedWriter out = new BufferedWriter(myWriter);
+		      
+		      for(Map.Entry<String, Float>  method : methodWeights.entrySet()) {
+		    	  out.write(method.getKey() +"="+ method.getValue());
+		    	  out.write(";OnlySevere="+ methodOnlySevereWeights.get(method.getKey()));
+		    	  out.newLine();
+		      }
+					
+		      for(int i=0; i < fieldWeights.size(); i++) {
+		    	  out.write(TestFrameAnalyzer.names.get(i) +"="+ fieldWeights.get(i));
+		    	  out.write(";OnlySevere="+ fieldOnlySevereWeights.get(i));
+		    	  out.newLine();
+		      }
+		      
+		      out.close();
+		      myWriter.close();
+	      } catch (Exception e) {
+	        System.out.println("[ERROR] File writing error..");
+	        
+	      }
 	}
 	
 	
-	
-	
-	public void printWeights() {
-		System.out.println("Weights: \n");
-		for(Map.Entry<String, Float>  method : methodWeights.entrySet()) {
-			System.out.println("	"+ method.getKey() +": "+ method.getValue());			
-		}
-		
-		for(int i = 0;i< TestFrameAnalyzer.FIELDS_NUM; i++) {
-			System.out.println("	"+TestFrameAnalyzer.names.get(i) +" : "+ fieldWeights.get(i));
-		}
+	public void setOnlySevere(boolean onlySevere) {
+		ONLY_SEVERE = onlySevere;
 	}
+	
 }

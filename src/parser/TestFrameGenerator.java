@@ -1054,6 +1054,7 @@ public class TestFrameGenerator {
 				System.out.print(" | ");
 				testFrames.get(i).printValidCombination();
 			}
+			System.out.print(" | Priority: " + testFrames.get(i).getPriority());
 			System.out.println();
 		}
 	}

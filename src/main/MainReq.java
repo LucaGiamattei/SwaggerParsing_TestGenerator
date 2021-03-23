@@ -8,6 +8,7 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -17,8 +18,10 @@ import com.google.gson.JsonParser;
 
 //import dataOperation.OperationalProfileAlterator;
 import parser.TestFrameGenerator;
+import prioritizer.PrioritySorter;
 import prioritizer.TestFramePrioritizer;
 import analyzer.TestFrameAnalyzer;
+import dataStructure.TestFrame;
 //import selector.AWSSelector;
 //import selector.AWSSelectorWR;
 
@@ -43,9 +46,15 @@ public class MainReq {
 	private static String password = "";
 	private static String token = "";
 	private static String loginUrl = "";
+	private static String priorityMode = "";
 	private static String path = "/";
+	private static String weightsFile = "weights.txt";
+	private static int dynamicRequestBuffer = 50;
 	private static ArrayList<String> jsonFiles = new ArrayList<String>();
 	private static ArrayList<String> configParameters = new ArrayList<String>();
+	
+	
+	
 
 	public static void main(String[] args) {
 		scan = new Scanner(System.in);
@@ -68,6 +77,7 @@ public class MainReq {
 					System.out.println("\n\n***************** CONFIGURATION");
 					System.out.println("Json File: " + jsonsFile);
 					System.out.println("Test mode: " + testMode);
+					System.out.println("Priority mode: " + priorityMode);
 					System.out.println("Debug mode: " + debugMode);
 					System.out.println("Login mode: " + loginMode);
 					if(loginMode.equals("log")) {
@@ -119,35 +129,43 @@ public class MainReq {
 					}
 					System.out.println("***************** Parsing Done");
 					
+					
+					
+					
+					
 					Selection = 0;
 					while(Selection==0){
 						System.out.println("\n*****************__MAIN OPTIONS");
-						System.out.println("Options:\n1) Start requesting \n2) Print generated test (not recommended for big datasets, "+tfg.testFrames.size()+" test to print)\n3) Exit");
-		
-						Selection = scan.nextInt();
-						if(Selection < 1 || Selection > 3){Selection = 0;}
+						System.out.println("Options:\n1) Start requesting (random) \n2) Start requesting (dynamic priority) \n3) Start requesting (file priority) \n4) Print generated test (not recommended for big datasets, "+tfg.testFrames.size()+" test to print)\n5) Exit");
 						
-						if(Selection == 1) {
-							int N_tf = 0;
+						boolean openSecondLevelOptions = false;
+						ArrayList<Integer> tfs = new ArrayList<Integer>();
+						
+						Selection = scan.nextInt();
+						if(Selection < 1 || Selection > 5){Selection = 0;}
+						
+						else if(Selection == 1) {
 							
-							while (N_tf == 0 || N_tf > tfg.testFrames.size()) {
+							//-------------------------------------------------------------------- MAIN SEL 1 --------------------------------------------------------------------
+							int nTf = 0;
+							
+							while (nTf == 0 || nTf > tfg.testFrames.size()) {
 								System.out.println("\nInsert the number of test to execute (max: "+ tfg.testFrames.size() +")");
-								N_tf = scan.nextInt();
+								nTf = scan.nextInt();
 							}
 							
 							//SELEZIONE TEST							
-							ArrayList<Integer> tfs = new ArrayList<Integer>();
 							Random random = new Random();
 							
-							if(N_tf ==  tfg.testFrames.size()) {
+							if(nTf ==  tfg.testFrames.size()) {
 								System.out.println("\nAll dataset selected..");
 								for(int i = 0; i < tfg.testFrames.size(); i++) {
 									tfs.add(i);
 								}
 							}else {
-								System.out.println("\nSelecting "+ N_tf +" random test..");
+								System.out.println("\nSelecting "+ nTf +" random test..");
 
-								for(int i = 0; i < N_tf; i++) {
+								for(int i = 0; i < nTf; i++) {
 									int rNum = random.nextInt(tfg.testFrames.size()-1);
 									while (tfs.contains(rNum)) {
 										rNum = random.nextInt(tfg.testFrames.size()-1);
@@ -155,44 +173,71 @@ public class MainReq {
 									tfs.add(rNum);
 								}
 							}
-							ArrayList<Integer> failedIndexes = new ArrayList<Integer>();
-							ArrayList<Integer> successIndexes = new ArrayList<Integer>();
 							
-							System.out.println("\nRequesting...\n");
-							boolean e = false;
+							startRequesting(tfg,tfs,nTf);
 							
-							int countReset = 0;
-							boolean changeLoading = true;
+							openSecondLevelOptions = true;
 							
-							//INVIO RICHIESTE
-							for(int i=0; i<N_tf ;i++){
-								//System.out.println();
-								tfg.testFrames.get(tfs.get(i)).setFinalToken(token);
-								e=tfg.testFrames.get(tfs.get(i)).extractAndExecuteTestCase();
-								
-								countReset++;
-								if(countReset == 25) {
-									if(changeLoading) {
-										System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\");countReset = 0;
-										changeLoading = false;
-									}else{System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b////////////////////");countReset = 0;
-									changeLoading = true;}
-											
-								}
-								if(!e){
-									failedIndexes.add(tfs.get(i));
-									e = false;
-								}else {
-									successIndexes.add(tfs.get(i));
-								}
+						} else if(Selection == 2) {
+							
+							
+							//-------------------------------------------------------------------- MAIN SEL 2 --------------------------------------------------------------------	
+							//seleziono i primi N con maggiore priorità
+							int nTf = 0;
+							
+							while (nTf == 0 || nTf > tfg.testFrames.size()) {
+								System.out.println("\nInsert the number of test to execute (max: "+ tfg.testFrames.size() +")");
+								nTf = scan.nextInt();
 							}
-							System.out.println("\n***************** Requests End");
 							
-							System.out.println("\nResults:");
-							System.out.println("Test executed: " + N_tf);
-							System.out.println("Success: " + successIndexes.size());
-							System.out.println("Failures: " + failedIndexes.size());
+							startDynamicRequesting(tfg,tfs,nTf);
 							
+							openSecondLevelOptions = true;
+							
+						} else if(Selection == 3) {
+							
+							//-------------------------------------------------------------------- MAIN SEL 3 --------------------------------------------------------------------
+							//leggo da file i pesi e prioritizzo
+							TestFramePrioritizer tfp;
+							int nTf = 0;
+							
+							if (priorityMode.equals("onlysevere")) {
+								tfp = new TestFramePrioritizer(true);
+							}else {
+								tfp = new TestFramePrioritizer(false);
+							}
+							
+							tfp.getWeightsFromFile(weightsFile);
+							tfp.printWeights();
+							tfp.prioritizeTest(tfg.testFrames);
+							
+							tfg.testFrames.sort(new PrioritySorter());
+							Collections.reverse(tfg.testFrames);
+							
+							//seleziono i primi N con maggiore priorità
+							while (nTf == 0 || nTf > tfg.testFrames.size()) {
+								System.out.println("\nInsert the number of test to execute (max: "+ tfg.testFrames.size() +")");
+								nTf = scan.nextInt();
+							}
+							
+							for (int i = 0; i< nTf; i++) {tfs.add(i);}
+							
+							startRequesting(tfg,tfs,nTf);
+							
+							openSecondLevelOptions = true;
+							
+							
+						} else if(Selection == 4) {
+							
+							//-------------------------------------------------------------------- MAIN SEL 4 --------------------------------------------------------------------
+							
+							tfg.stampaTestFrames();
+							Selection = 0;
+							
+						}
+						
+						//-------------------------------------------------------------------- AFTER REQUEST OPTIONS --------------------------------------------------------------------
+						if(openSecondLevelOptions) {
 							Selection = 0;
 							while(Selection == 0) {
 								System.out.println("\nSelect:\n 1) Analyzer \n 2) Prioritizer \n 3) Back to main options");
@@ -209,13 +254,13 @@ public class MainReq {
 										
 									TestFrameAnalyzer tfa = new TestFrameAnalyzer();
 										
-									tfa.analyzeTest(tfg, tfs);
+									tfa.analyzeTest(tfg.testFrames, tfs);
 									
 									Selection = 0;
 									while(Selection == 0) {
 										System.out.println("\nSelect:\n1) Calculate Statistics\n"
-												+ "2) Print failed test ("+failedIndexes.size()+")\n"
-												+ "3) Print success test ("+successIndexes.size()+")\n"
+												+ "2) Print failed test ("+tfa.failedIndexes.size()+")\n"
+												+ "3) Print success test ("+tfa.successIndexes.size()+")\n"
 												+ "4) Print max/min response time test\n"
 												+ "5) Print data to file\n"
 												+ "6) Exit from analyzer");
@@ -228,11 +273,11 @@ public class MainReq {
 											Selection = 0;
 											
 										}else if (Selection == 2) {
-											tfa.printTest(tfg, failedIndexes);
+											tfa.printTest(tfg.testFrames, tfa.failedIndexes);
 											Selection = 0;
 											
 										}else if (Selection == 3) {
-											tfa.printTest(tfg, successIndexes);
+											tfa.printTest(tfg.testFrames, tfa.successIndexes);
 											Selection = 0;
 											
 										}else if(Selection == 4) {
@@ -249,45 +294,58 @@ public class MainReq {
 										}
 									}
 									Selection = 0;
-
+								
 								}else if(Selection == 2) {
 									//PRIORITIZZAZIONE TEST EFFETTUATI
 									System.out.println("\n***************** Prioritization");
+									TestFramePrioritizer tfp;
 									
-									TestFramePrioritizer tfp = new TestFramePrioritizer();
+									if (priorityMode.equals("onlysevere")) {
+										tfp = new TestFramePrioritizer(true);
+									}else {
+										tfp = new TestFramePrioritizer(false);
+									}
 									
 									Selection = 0;
 									while(Selection == 0) {
 										System.out.println("\nSelect:\n1) Calculate Weights\n"
-												+ "2) Print Weights \n"
-												+ "3) Exit from Prioritizer");
+												+ "2) Print Weights to Console \n"
+												+ "3) Prioritize Test \n"
+												+ "4) Print Weights to File \n"
+												+ "5) Exit from Prioritizer");
 										Selection = scan.nextInt();
-										if(Selection < 1 || Selection > 3) {Selection = 0;}
+										if(Selection < 1 || Selection > 5) {Selection = 0;}
 										
 										else if (Selection == 1) {
 											TestFrameAnalyzer tfa = new TestFrameAnalyzer();
-											tfa.analyzeTest(tfg, tfs);
-											tfp.calculateWeights(tfa);
+											tfa.analyzeTest(tfg.testFrames, tfs);
+											tfp.calculateWeights(tfa);			
 											Selection = 0;
+											
 										}else if (Selection == 2) {
 											tfp.printWeights();
 											Selection = 0;
-		
-										}else if(Selection == 3) {
+											
+										}else if (Selection == 3) {
+											tfp.prioritizeTest(tfg.testFrames);
+											Selection = 0;
+
+										}else if(Selection == 4) {
+											tfp.printWeightsToFile(weightsFile);
+											Selection = 0;
+											
+										}else if(Selection == 5) {
 											break;
 										}
 									}
+									
 									Selection = 0;
 								}
 							}
-							
+							openSecondLevelOptions = false;
 							Selection = 0;
 						}
 						
-						if(Selection == 2) {
-							tfg.stampaTestFrames();
-							Selection = 0;
-						}
 					}
 					System.out.println("***************** Exit");
 				}else {
@@ -309,7 +367,130 @@ public class MainReq {
 	
 	
 	
-	//FUNZIONI AUSILIARIE
+	// FUNZIONI AUSILIARIE *****************************************************************************************************************************
+	
+	private static void startDynamicRequesting(TestFrameGenerator tfg, ArrayList<Integer> tfs, int nTf) {
+		System.out.println("\nRequesting...\n");
+		
+		boolean e = false;
+		TestFrameAnalyzer tfa = new TestFrameAnalyzer();
+		TestFramePrioritizer tfp;
+		if (priorityMode.equals("onlysevere")) {
+			tfp = new TestFramePrioritizer(true);
+		}else {
+			tfp = new TestFramePrioritizer(false);
+		}
+		
+		ArrayList<TestFrame> testNotDone = new ArrayList<TestFrame>(tfg.testFrames);
+		ArrayList<Integer> indexToAnalyze = new ArrayList<Integer>();
+		
+		int failCount = 0;
+		int countReset = 1;
+		boolean changeLoading = true;
+		Random random = new Random();
+		int bufferIndex =0;
+		
+		while(tfs.size() < dynamicRequestBuffer) {
+			bufferIndex = random.nextInt(testNotDone.size()-1);
+			tfs.add(bufferIndex);
+			
+			//first random request
+			tfg.testFrames.get(bufferIndex).setFinalToken(token);
+			e=tfg.testFrames.get(bufferIndex).extractAndExecuteTestCase();
+			if(!e)
+				failCount++;
+			
+			testNotDone.remove(bufferIndex);
+			indexToAnalyze.add(bufferIndex);
+		}
+		
+		while(tfs.size() < nTf) {			
+			tfa.analyzeTest(tfg.testFrames, indexToAnalyze);
+			tfp.calculateWeights(tfa);
+			tfp.prioritizeTest(testNotDone);
+			
+			testNotDone.sort(new PrioritySorter());
+			Collections.reverse(testNotDone);
+
+			//prendo indice
+			int tfgIndex = 0;
+			for(int i=0;i<tfg.testFrames.size();i++) {
+				if(testNotDone.get(0).getTfID() == tfg.testFrames.get(i).getTfID()) {
+					tfs.add(i);
+					tfgIndex=i;
+				}
+			}
+			
+			tfg.testFrames.get(tfgIndex).setFinalToken(token);
+			e=tfg.testFrames.get(tfgIndex).extractAndExecuteTestCase();
+			if(!e)
+				failCount++;
+			
+			testNotDone.remove(0);
+			indexToAnalyze.add(tfgIndex);
+			
+			changeLoading = loadingPrint(countReset++,changeLoading);
+			
+		}
+		
+		/*	1)effettuo prima richiesta random
+		 * 	2)calcolo pesi con il risultato
+		 * 	3)ordino sulla priorità
+		 * 	4)eseguo prima istruzione che trovo che non ho già eseguito
+		 * */
+		int successCount = nTf-failCount;
+		
+		System.out.println("\n***************** Requests End");
+		
+		System.out.println("\nResults:");
+		System.out.println("Test executed: " + nTf);
+		System.out.println("Success: " + successCount);
+		System.out.println("Failures: " + failCount);
+		tfp.printWeights();
+	}
+	
+	
+	private static void startRequesting(TestFrameGenerator tfg, ArrayList<Integer> tfs, int nTf) {
+		System.out.println("\nRequesting...\n");
+		boolean e = false;
+		
+		int countReset = 0;
+		int failCount =0;
+		boolean changeLoading = true;
+		
+		//INVIO RICHIESTE
+		for(int i=0; i<nTf ;i++){
+			//System.out.println();
+			tfg.testFrames.get(tfs.get(i)).setFinalToken(token);
+			e=tfg.testFrames.get(tfs.get(i)).extractAndExecuteTestCase();
+			
+			changeLoading = loadingPrint(countReset++,changeLoading);
+			
+			if(!e){
+				failCount++;
+				e = false;
+			}
+		}
+		System.out.println("\n***************** Requests End");
+		
+		int successCount = nTf - failCount;
+		System.out.println("\nResults:");
+		System.out.println("Test executed: " + nTf);
+		System.out.println("Success: " + successCount);
+		System.out.println("Failures: " + failCount);
+	}
+	
+	
+	private static boolean loadingPrint(int countReset,boolean changeLoading) {
+		if(countReset % 25 == 0) {
+			if(changeLoading) {
+				System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\");
+			}else{System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b////////////////////");}
+					
+		}
+		return !changeLoading;
+	}
+	
 	
 	private static void readJsons(String fileToRead, ArrayList<String> jsonFiles) {
 		try {
@@ -412,19 +593,21 @@ public class MainReq {
 		
 		boolean returnVal = false;
 		
-		if(configParameters.size() >= 3 && configParameters.size() <= 6) {
+		//controllo che il numero di parametri sia corretto
+		if(configParameters.size() >= 4 && configParameters.size() <= 7) {
 			//jsonsFile parsing
 			jsonsFile = configParameters.get(0).split("=")[1];
 			testMode = configParameters.get(1).split("=")[1];
+			priorityMode = configParameters.get(2).split("=")[1];
 			if(testMode.equals("quickmode") || testMode.equals("normalmode") || testMode.equals("pairwisemode")) {
-				loginMode = configParameters.get(2).split("=")[1];
+				loginMode = configParameters.get(3).split("=")[1];
 				if(loginMode.equals("log") || loginMode.equals("nolog")|| loginMode.equals("token")) {
 					if(loginMode.equals("log")) {
-						username = configParameters.get(3).split("=")[1];
-						password = configParameters.get(4).split("=")[1];
-						loginUrl = configParameters.get(5).split("=")[1];
+						username = configParameters.get(4).split("=")[1];
+						password = configParameters.get(5).split("=")[1];
+						loginUrl = configParameters.get(6).split("=")[1];
 					}else if(loginMode.equals("token")) {
-						token = configParameters.get(3).split("=")[1];
+						token = configParameters.get(4).split("=")[1];
 					}
 					returnVal = true;
 				}else {System.out.println("[ERROR] Configuration parsing: Wrong logMode");}
