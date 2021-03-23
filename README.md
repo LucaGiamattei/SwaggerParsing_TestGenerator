@@ -11,3 +11,12 @@ This tool implements:
 The executable Jar needs a txt configuration file.
 
 ## Configuration
+Read one of the example config file for details.
+- The request generation has 3 possible configuration:
+  - **Normal**:
+  - **Quick**:
+  - **Pairwise**:
+- The requesting part has 3 possible configuration:
+  - **Random**:
+  - **Prioritization on all failures**:
+  - **Prioritization on severe failures**:
