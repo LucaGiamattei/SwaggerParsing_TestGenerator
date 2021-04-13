@@ -7,8 +7,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -24,6 +26,10 @@ import analyzer.TestFrameAnalyzer;
 import dataStructure.TestFrame;
 //import selector.AWSSelector;
 //import selector.AWSSelectorWR;
+
+import org.fusesource.jansi.AnsiConsole;
+import static org.fusesource.jansi.Ansi.*;
+import static org.fusesource.jansi.Ansi.Color.*;
 
 
 /* Configuration Parameters
@@ -58,6 +64,8 @@ public class MainReq {
 
 	public static void main(String[] args) {
 		scan = new Scanner(System.in);
+		
+		AnsiConsole.systemInstall();
 		//String path = "/";
 		int Selection = 0;
 		
@@ -120,11 +128,23 @@ public class MainReq {
 						tfg.setQuickMode(true);
 					}else if(testMode.equals("pairwisemode")) {
 						tfg.setPairWiseMode(true);
+					}else if(testMode.equals("validmode")) {
+						tfg.setValidMode(true);
+					}else if(testMode.equals("validmodeP")) {
+						tfg.setValidModeP(true);
+					}else if(testMode.equals("invalidmode")) {
+						tfg.setInvalidModeP(true);
+					}else if(testMode.equals("pairwisenvmode")) {
+						tfg.setPairWiseNVMode(true);
+					}else if(testMode.equals("validinvalidmode")) {
+						tfg.setValidInvalidMode(true);
+					}else if(testMode.equals("quickboundedmode")) {
+						tfg.setQuickBoundedModeMode(true);
 					}
 					
 					System.out.println("\n***************** Parsing files ");
 					for(int i = 0; i<jsonFiles.size(); i++) {
-						tfg.JsonURIParser(path+jsonFiles.get(i));
+						tfg.JsonURIParser(path+jsonFiles.get(i),i+1);
 						System.out.println("\n");
 					}
 					System.out.println("***************** Parsing Done");
@@ -173,8 +193,13 @@ public class MainReq {
 									tfs.add(rNum);
 								}
 							}
+							long startReq = System.currentTimeMillis();
 							
 							startRequesting(tfg,tfs,nTf);
+							
+							long reqTime = System.currentTimeMillis() - startReq ;
+							
+							System.out.println("\nTotal time: "+ new SimpleDateFormat("mm:ss:SSS").format(new Date(reqTime)));
 							
 							openSecondLevelOptions = true;
 							
@@ -190,7 +215,13 @@ public class MainReq {
 								nTf = scan.nextInt();
 							}
 							
+							long startReq = System.currentTimeMillis();
+							
 							startDynamicRequesting(tfg,tfs,nTf);
+							
+							long reqTime = System.currentTimeMillis() - startReq ;
+							
+							System.out.println("\nTotal time: "+ new SimpleDateFormat("mm:ss:SSS").format(new Date(reqTime)));
 							
 							openSecondLevelOptions = true;
 							
@@ -222,7 +253,13 @@ public class MainReq {
 							
 							for (int i = 0; i< nTf; i++) {tfs.add(i);}
 							
+							long startReq = System.currentTimeMillis();
+							
 							startRequesting(tfg,tfs,nTf);
+							
+							long reqTime = System.currentTimeMillis() - startReq ;
+							
+							System.out.println("\nTotal time: "+ new SimpleDateFormat("mm:ss:SSS").format(new Date(reqTime)));
 							
 							openSecondLevelOptions = true;
 							
@@ -263,9 +300,10 @@ public class MainReq {
 												+ "3) Print success test ("+tfa.successIndexes.size()+")\n"
 												+ "4) Print max/min response time test\n"
 												+ "5) Print data to file\n"
-												+ "6) Exit from analyzer");
+												+ "6) Calculate Statistics by Json\n"
+												+ "7) Exit from analyzer");
 										Selection = scan.nextInt();
-										if(Selection < 1 || Selection > 6) {Selection = 0;}
+										if(Selection < 1 || Selection > 7) {Selection = 0;}
 										
 										else if (Selection == 1) {
 											//statistics
@@ -290,6 +328,10 @@ public class MainReq {
 											Selection = 0;
 											
 										}else if(Selection == 6) {
+											tfa.printStatisticsByJson(tfg.testFrames, tfs);
+											Selection = 0;
+											
+										}else if(Selection == 7) {
 											break;
 										}
 									}
@@ -349,10 +391,10 @@ public class MainReq {
 					}
 					System.out.println("***************** Exit");
 				}else {
-					System.out.println("[ERROR] Configuration Failed");
+					System.out.println("["+ansi().fgBright(RED).a("ERROR").reset()+"] Configuration Failed");
 				}
 			}else {
-				System.out.println("[ERROR] Requested input parameters: \n - Configuration file name \n - <debug> (optional)");
+				System.out.println("["+ansi().fgBright(RED).a("ERROR").reset()+"] Requested input parameters: \n - Configuration file name \n - <debug> (optional)");
 			}
 			
 		} catch (IOException e) {
@@ -360,7 +402,7 @@ public class MainReq {
 		}
 		
 		
-		
+		AnsiConsole.systemUninstall();
 	}
 	
 	
@@ -370,11 +412,15 @@ public class MainReq {
 	// FUNZIONI AUSILIARIE *****************************************************************************************************************************
 	
 	private static void startDynamicRequesting(TestFrameGenerator tfg, ArrayList<Integer> tfs, int nTf) {
-		System.out.println("\nRequesting...\n");
+		System.out.println();
+		System.out.println(ansi().fgBright(MAGENTA).a("Requesting..").reset());
+		System.out.println();
 		
 		boolean e = false;
+		int internalErrorCount = 0;
 		TestFrameAnalyzer tfa = new TestFrameAnalyzer();
 		TestFramePrioritizer tfp;
+		
 		if (priorityMode.equals("onlysevere")) {
 			tfp = new TestFramePrioritizer(true);
 		}else {
@@ -386,7 +432,7 @@ public class MainReq {
 		
 		int failCount = 0;
 		int countReset = 1;
-		boolean changeLoading = true;
+		int changeLoading = 0;
 		Random random = new Random();
 		int bufferIndex =0;
 		
@@ -397,9 +443,14 @@ public class MainReq {
 			//first random request
 			tfg.testFrames.get(bufferIndex).setFinalToken(token);
 			e=tfg.testFrames.get(bufferIndex).extractAndExecuteTestCase();
-			if(!e)
-				failCount++;
-			
+			if(!e) {
+				if(tfg.testFrames.get(tfs.get(bufferIndex)).getResponseCode() >= 0) {
+					failCount++;
+				}else {
+					internalErrorCount++;
+				}
+				e = false;
+			}
 			testNotDone.remove(bufferIndex);
 			indexToAnalyze.add(bufferIndex);
 		}
@@ -423,8 +474,14 @@ public class MainReq {
 			
 			tfg.testFrames.get(tfgIndex).setFinalToken(token);
 			e=tfg.testFrames.get(tfgIndex).extractAndExecuteTestCase();
-			if(!e)
-				failCount++;
+			if(!e) {
+				if(tfg.testFrames.get(tfs.get(tfgIndex)).getResponseCode() >= 0) {
+					failCount++;
+				}else {
+					internalErrorCount++;
+				}
+				e = false;
+			}
 			
 			testNotDone.remove(0);
 			indexToAnalyze.add(tfgIndex);
@@ -438,12 +495,16 @@ public class MainReq {
 		 * 	3)ordino sulla priorità
 		 * 	4)eseguo prima istruzione che trovo che non ho già eseguito
 		 * */
-		int successCount = nTf-failCount;
 		
-		System.out.println("\n***************** Requests End");
+		int execTest = nTf - internalErrorCount;
+		int successCount = execTest-failCount;
 		
-		System.out.println("\nResults:");
-		System.out.println("Test executed: " + nTf);
+		System.out.println();
+		System.out.println("***************** Requests End");
+		
+		System.out.println();
+		System.out.println("Results:");
+		System.out.println("Test executed: " + execTest);
 		System.out.println("Success: " + successCount);
 		System.out.println("Failures: " + failCount);
 		tfp.printWeights();
@@ -451,12 +512,15 @@ public class MainReq {
 	
 	
 	private static void startRequesting(TestFrameGenerator tfg, ArrayList<Integer> tfs, int nTf) {
-		System.out.println("\nRequesting...\n");
+		System.out.println();
+		System.out.println(ansi().fgBright(MAGENTA).a("Requesting..").reset());
+		System.out.println();
 		boolean e = false;
 		
 		int countReset = 0;
 		int failCount =0;
-		boolean changeLoading = true;
+		int changeLoading = 0;
+		int internalErrorCount = 0;
 		
 		//INVIO RICHIESTE
 		for(int i=0; i<nTf ;i++){
@@ -467,28 +531,55 @@ public class MainReq {
 			changeLoading = loadingPrint(countReset++,changeLoading);
 			
 			if(!e){
-				failCount++;
+				if(tfg.testFrames.get(tfs.get(i)).getResponseCode() >= 0) {
+					failCount++;
+				}else {
+					internalErrorCount++;
+				}
 				e = false;
 			}
 		}
 		System.out.println("\n***************** Requests End");
 		
-		int successCount = nTf - failCount;
+		int execTest = nTf-internalErrorCount;
+		int successCount = execTest - failCount;
+		
 		System.out.println("\nResults:");
-		System.out.println("Test executed: " + nTf);
+		System.out.println("Test executed: " + execTest);
 		System.out.println("Success: " + successCount);
 		System.out.println("Failures: " + failCount);
 	}
 	
 	
-	private static boolean loadingPrint(int countReset,boolean changeLoading) {
+	private static int loadingPrint(int countReset,int changeLoading) {
+		
 		if(countReset % 25 == 0) {
-			if(changeLoading) {
-				System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\");
-			}else{System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b////////////////////");}
+			if(changeLoading > 8) {
+				changeLoading = 1;
+			}else {
+				changeLoading++;
+			}
+			
+			if(changeLoading == 1) {
+				System.out.print("\b\b\b\b\b\b"+ansi().fgBright(MAGENTA).a("||||||").reset());
+			}else if(changeLoading == 2){
+				System.out.print("\b\b\b\b\b\b"+ansi().fgBright(MAGENTA).a("//////").reset());
+			}else if(changeLoading == 3){
+				System.out.print("\b\b\b\b\b\b"+ansi().fgBright(MAGENTA).a("------").reset());
+			}else if(changeLoading == 4){
+				System.out.print("\b\b\b\b\b\b"+ansi().fgBright(MAGENTA).a("\\\\\\\\\\\\").reset());
+			}else if(changeLoading == 5){
+				System.out.print("\b\b\b\b\b\b"+ansi().fgBright(MAGENTA).a("||||||").reset());
+			}else if(changeLoading == 6){
+				System.out.print("\b\b\b\b\b\b"+ansi().fgBright(MAGENTA).a("//////").reset());
+			}else if(changeLoading == 7){
+				System.out.print("\b\b\b\b\b\b"+ansi().fgBright(MAGENTA).a("------").reset());
+			}else if(changeLoading == 8){
+				System.out.print("\b\b\b\b\b\b"+ansi().fgBright(MAGENTA).a("\\\\\\\\\\\\").reset());
+			}
 					
 		}
-		return !changeLoading;
+		return changeLoading;
 	}
 	
 	
@@ -503,7 +594,7 @@ public class MainReq {
 	        }
 	        myReader.close();
 	      } catch (Exception e) {
-	    	  System.out.println("[ERROR] Json retrieval: File read failed.");
+	    	  System.out.println("["+ansi().fgBright(RED).a("ERROR").reset()+"] Json retrieval: File read failed.");
 	      }
 	}
 	
@@ -549,7 +640,7 @@ public class MainReq {
 			}
 			
 		} catch (IOException e) {
-	        System.out.println("\n[ERROR] Login: Connection problem.");
+	        System.out.println("\n"+"["+ansi().fgBright(RED).a("ERROR").reset()+"] Login: Connection problem.");
 		} finally {
 			if (con != null) {
 				con.disconnect();
@@ -583,7 +674,7 @@ public class MainReq {
 	        }
 	        myReader.close();
 	      } catch (Exception e) {
-	    	  System.out.println("[ERROR] Configuration: File read failed.");
+	    	  System.out.println("["+ansi().fgBright(RED).a("ERROR").reset()+"] Configuration: File read failed.");
 	      }
 		return parseConfigParameters();
 	}
@@ -599,7 +690,16 @@ public class MainReq {
 			jsonsFile = configParameters.get(0).split("=")[1];
 			testMode = configParameters.get(1).split("=")[1];
 			priorityMode = configParameters.get(2).split("=")[1];
-			if(testMode.equals("quickmode") || testMode.equals("normalmode") || testMode.equals("pairwisemode")) {
+			if(testMode.equals("quickmode") 
+					|| testMode.equals("normalmode") 
+					|| testMode.equals("pairwisemode") 
+					|| testMode.equals("validmode") 
+					|| testMode.equals("validmodeP") 
+					|| testMode.equals("invalidmode")
+					|| testMode.equals("pairwisenvmode")
+					|| testMode.equals("validinvalidmode")
+					|| testMode.equals("quickboundedmode")) {
+				
 				loginMode = configParameters.get(3).split("=")[1];
 				if(loginMode.equals("log") || loginMode.equals("nolog")|| loginMode.equals("token")) {
 					if(loginMode.equals("log")) {
@@ -610,8 +710,8 @@ public class MainReq {
 						token = configParameters.get(4).split("=")[1];
 					}
 					returnVal = true;
-				}else {System.out.println("[ERROR] Configuration parsing: Wrong logMode");}
-			}else{System.out.println("[ERROR] Configuration parsing: Wrong testMode");}
+				}else {System.out.println("["+ansi().fgBright(RED).a("ERROR").reset()+"] Configuration parsing: Wrong logMode");}
+			}else{System.out.println("["+ansi().fgBright(RED).a("ERROR").reset()+"] Configuration parsing: Wrong testMode");}
 		}
 		
 		return returnVal;

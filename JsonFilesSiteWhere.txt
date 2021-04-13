@@ -1,1 +1,1 @@
-JSONdoc/SiteWhere/swagger-8080.json
+JSONdoc/SiteWhere/swagger_8080.json

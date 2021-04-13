@@ -1,10 +1,36 @@
+********************* POSSIBLE CONFIGURATIONS
+**	
+**	jsonFile=<name of the file with json names for parsing>
+**	testMode=<normalmode,quickmode,pairwisemode,validmode,validmodeP,validinvalidmode,quickboundedmode>
+**	priorityMode=<allfailure,onlysevere>
+**	logMode=<log,nolog,token>
+**	
+**	ATT - with "logMode=log" you need to specify:
+**		username=<username>
+**		password=<password>
+**		loginUrl=<api url to forward login request>
+**	    - with "logMode=log" you need to specify:
+**		token=<authentication token>
+**	
+**	OSS - when "**" is found the line is ignored
+**	    - don't leave empty lines
+**	    - the order of the parameter is important
+**
+**
+**
 jsonFile=JsonFilesTrainTicket.txt
-**testMode=normalmode
-**testMode=quickmode
-testMode=pairwisemode
-logMode=log
-username=admin
-password=222222
-**username=fdse_microservice
-**password=111111
-loginUrl=http://localhost:12340/api/v1/users/login
+testMode=pairwisenvmode
+priorityMode=onlysevere
+logMode=nolog
+**username=admin
+**password=222222
+**loginUrl=http://192.168.1.132:12340/api/v1/users/login
+**
+**
+**	TrainTicket credentials
+**
+**	username=fdse_microservice
+**	password=111111
+**
+**	username=admin
+**	password=222222

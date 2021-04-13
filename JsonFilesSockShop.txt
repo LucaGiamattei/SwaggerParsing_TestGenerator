@@ -1,4 +1,4 @@
-JSONdoc/SockShop/catalogue.json
 JSONdoc/SockShop/orders.json
-JSONdoc/SockShop/payment.json
 JSONdoc/SockShop/user.json
+JSONdoc/SockShop/payment.json
+JSONdoc/SockShop/catalogue.json

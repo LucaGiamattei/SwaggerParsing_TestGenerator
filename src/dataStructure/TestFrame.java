@@ -6,6 +6,10 @@ import java.util.Date;
 import java.util.Scanner;
 import java.util.TimeZone;
 import java.util.concurrent.ThreadLocalRandom;
+
+import static org.fusesource.jansi.Ansi.ansi;
+import static org.fusesource.jansi.Ansi.Color.*;
+
 import java.awt.Toolkit;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -28,6 +32,7 @@ public class TestFrame{
 
 	private String name;
 	private String tfID;
+	private int jsonID;
 	//private ArrayList<TestCase> testCases;
 	private double failureProb;
 	private double occurrenceProb;
@@ -79,47 +84,22 @@ public class TestFrame{
 		priority = 0;
 		failureSeverity = 0;
 	}
-
-	public TestFrame(String _name, String _tfID, double _failureProb, double _occurrenceProb, boolean debug) {
+	
+	public TestFrame(int _jsonID, String _name, String _tfID, String _reqType, String _payload, boolean debug) {
 		super();
-		this.name = _name;
-		this.tfID = _tfID;
-		this.failureProb = _failureProb;
-		this.occurrenceProb = _occurrenceProb;
-		finalToken="";
-		DEBUG_MODE= debug;
-		state = "notdefined";
-		priority = 0;
-		failureSeverity = 0;
-	}
-
-
-/*	public TestFrame(String _name, String _tfID, ArrayList<TestCase> _testCases, double _failureProb, double _occurrenceProb) {
-		super();
-		this.name = _name;
-		this.tfID = _tfID;
-		//this.testCases = _testCases;
-		this.failureProb = _failureProb;
-		this.occurrenceProb = _occurrenceProb;
-		finalToken="";
-	}*/
-
-	public TestFrame(String _service, String _name, String _tfID, String _reqType, double _failureProb, double _occurrenceProb, String _payload, boolean debug) {
-		super();
-		this.service = _service;
 		this.name = _name;
 		this.tfID = _tfID;
 		this.reqType = _reqType;
-		this.failureProb = _failureProb;
-		this.occurrenceProb = _occurrenceProb;
-		this.payload = _payload;
+		this.payload= _payload;
 		finalToken="";
 		DEBUG_MODE= debug;
 		state = "notdefined";
 		priority = 0;
 		failureSeverity = 0;
+		this.jsonID = _jsonID;
 	}
 
+	
 	// HTTP GET request
 	private void sendGet() throws Exception {
 		URL obj = new URL(url);
@@ -127,7 +107,7 @@ public class TestFrame{
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 		
 		if(DEBUG_MODE) 
-		System.out.println("[DEBUG] GET");
+		System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] GET");
 
 		try {
 			con.setRequestMethod("GET");
@@ -142,7 +122,7 @@ public class TestFrame{
 			responseTime = System.currentTimeMillis() - start;
 			
 			//if(DEBUG_MODE) 
-			//System.out.println("[DEBUG] GET response: "+ responseCode);
+			//System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] GET response: "+ responseCode);
 			if(responseCode < 300){
 				BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 				String inputLine;
@@ -172,7 +152,7 @@ public class TestFrame{
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 		
 		if(DEBUG_MODE) 
-		System.out.println("[DEBUG] POST");
+		System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] POST");
 		
 		try {
 			con.setDoOutput(true);
@@ -226,7 +206,7 @@ public class TestFrame{
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 		
 		if(DEBUG_MODE) 
-		System.out.println("[DEBUG] PUT");
+		System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] PUT");
 		
 		try {
 			con.setDoOutput(true);
@@ -272,7 +252,7 @@ public class TestFrame{
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 		
 		if(DEBUG_MODE) 
-		System.out.println("[DEBUG] DELETE");
+		System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] DELETE");
 
 		try {
 			con.setRequestMethod("DELETE");
@@ -311,7 +291,7 @@ public class TestFrame{
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 		
 		if(DEBUG_MODE) 
-		System.out.println("[DEBUG] HEAD");
+		System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] HEAD");
 
 		try {
 			con.setRequestMethod("HEAD");
@@ -363,9 +343,10 @@ public class TestFrame{
 		}
 		
 		if(DEBUG_MODE) {
-			System.out.println("\n----------------------------------------\n[DEBUG] url: "+ url);
+			System.out.println("\n----------------------------------------");
+			System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] url: "+ url);
 			if(selPayload != "null")
-			System.out.println("[DEBUG] payload: "+ selPayload);
+			System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] payload: "+ selPayload);
 		}
 
 //		System.out.println(this.tfID+") "+this.reqType+" "+this.url);
@@ -392,8 +373,8 @@ public class TestFrame{
 
 		} catch(java.net.SocketTimeoutException e){
 			if(DEBUG_MODE) {
-				System.out.println("[DEBUG] Exception response (timeout): "+ responseCode);
-				System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
+				System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] Exception response (timeout): "+ responseCode);
+				System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] Response Time: "+ responseTime+" ms");
 				System.out.println(e);
 			}
 			responseCode = -1;
@@ -423,12 +404,12 @@ public class TestFrame{
 			
 			if(DEBUG_MODE) {
 				if(returnValue){
-					System.out.println("[DEBUG] ExceptionHandler expected response: "+ responseCode);
-					System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
+					System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] ExceptionHandler expected response: "+ responseCode);
+					System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] Response Time: "+ responseTime+" ms");
 	
 				} else{
-					System.out.println("[DEBUG] ExceptionHandler not expected response: "+ responseCode);
-					System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
+					System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] ExceptionHandler not expected response: "+ responseCode);
+					System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] Response Time: "+ responseTime+" ms");
 				}
 			}
 			
@@ -454,11 +435,11 @@ public class TestFrame{
 		
 		if(DEBUG_MODE) {
 			if(returnValue) {
-				System.out.println("[DEBUG] Expected response received: "+ responseCode);
-				System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
+				System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] Expected response received: "+ responseCode);
+				System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] Response Time: "+ responseTime+" ms");
 			}else {
-				System.out.println("[DEBUG] Not expected response received: "+ responseCode);
-				System.out.println("[DEBUG] Response Time: "+ responseTime+" ms");
+				System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] Not expected response received: "+ responseCode);
+				System.out.println("["+ansi().fgBright(CYAN).a("DEBUG").reset()+"] Response Time: "+ responseTime+" ms");
 			}
 		}
 		
@@ -489,7 +470,12 @@ public class TestFrame{
 			case "int32":  sel = String.valueOf(ThreadLocalRandom.current().nextInt());
 			break;
 			
-			case "int64":  sel = String.valueOf(ThreadLocalRandom.current().nextLong());
+			case "int64":  
+				/*if(this.ic.get(i).defaultValue != null && this.ic.get(i).defaultValue != "") {
+					sel = this.ic.get(i).defaultValue;
+					break;
+				}*/
+				sel = String.valueOf(ThreadLocalRandom.current().nextLong());
 			break;
 			
 			case "date": sel = String.valueOf(LocalDate.now());
@@ -514,7 +500,7 @@ public class TestFrame{
 			case "different":  sel = randomNotInt();
 			break;
 
-			case "symbol":  sel = this.ic.get(i).min;
+			case "symbol":  sel = this.ic.get(i).defaultValue;
 			break;
 
 			case "empty":	sel = "";
@@ -544,7 +530,7 @@ public class TestFrame{
 				break; 
 
 			default: 
-				System.out.println("[ERROR] Type \""+type+"\" of IC not implemented, put \"error\" string in place..");				
+				System.out.println("["+ansi().fgBright(RED).a("ERROR").reset()+"] Type \""+type+"\" of IC not implemented, put \"error\" string in place..");				
 				sel = "error";
 			break;
 			}
@@ -584,6 +570,10 @@ public class TestFrame{
 
 	public String getTfID() {
 		return tfID;
+	}
+	
+	public int getJsonID() {
+		return jsonID;
 	}
 
 	public void setTfID(String tfID) {

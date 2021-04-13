@@ -1,5 +1,8 @@
 package analyzer;
 
+import static org.fusesource.jansi.Ansi.ansi;
+import static org.fusesource.jansi.Ansi.Color.RED;
+
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.PrintStream;
@@ -44,6 +47,7 @@ public class TestFrameAnalyzer {
 	
 	public ArrayList<Integer> failedIndexes;
 	public ArrayList<Integer> successIndexes;
+	public int internalErrorCount;
 	
 	public ArrayList<Integer> codes;
 	public ArrayList<Integer> codeCount;
@@ -81,7 +85,7 @@ public class TestFrameAnalyzer {
 		avg = 0;
 		max = 0;
 		min = 0;
-		
+		internalErrorCount = 0;
 	}
 	
 	public void analyzeTest(ArrayList<TestFrame> testFrames, ArrayList<Integer> tfs) {		
@@ -184,7 +188,11 @@ public class TestFrameAnalyzer {
 					}
 				}
 				
-				failedIndexes.add(tfs.get(i));
+				if(code >= 0) {
+					failedIndexes.add(tfs.get(i));
+				} else {
+					internalErrorCount++;
+				}
 				
 			}else {				
 				//CASO SUCCESSO
@@ -248,12 +256,14 @@ public class TestFrameAnalyzer {
 				System.out.println("Response Time: "+ tfg.testFrames.get(indexes.get(i)).getResponseTime()+" ms");
 			}
 		} else {
-			System.out.println("[ERROR] Failed to print min max..");
+			System.out.println("["+ansi().fgBright(RED).a("ERROR").reset()+"] Failed to print min max..");
 		}
 	}
 	
 	public void printStatistics(TestFrameGenerator tfg, ArrayList<Integer> tfs) {
-		System.out.println("\n# Test: " + tfs.size());
+		int execTest = tfs.size() - internalErrorCount;
+		
+		System.out.println("\n# Test: " + execTest);
 		System.out.println("# Failures: " + failedIndexes.size());
 				
 		//CODICI E count
@@ -415,11 +425,53 @@ public class TestFrameAnalyzer {
 		      out.close();
 		      myWriter.close();
 	      } catch (Exception e) {
-	        System.out.println("[ERROR] File writing error..");
+	        System.out.println("["+ansi().fgBright(RED).a("ERROR").reset()+"] File writing error..");
 	        
 	      }
+	}
+	
+	
+	public void printStatisticsByJson(ArrayList<TestFrame> testFrames, ArrayList<Integer> tfs) {
+		int jsonIndex = 1;
+		boolean finished = false;
 		
+		int failCount = 0;
+		int failSevereCount = 0;
+		int testCount = 0;
 		
+		while(!finished) {
+			for(int i = 0; i < tfs.size(); i++) {
+				
+				if(jsonIndex == testFrames.get(tfs.get(i)).getJsonID()) {
+					if(testFrames.get(tfs.get(i)).getResponseCode()>0) {
+						testCount++;
+						if(testFrames.get(tfs.get(i)).getState().equals("failed")) {
+							failCount++;
+							if(testFrames.get(tfs.get(i)).getFailureSeverity() == 2) 
+								failSevereCount++;
+						}
+					}
+				}
+			}
+			
+			if(testCount == 0) {
+				finished = true;
+			}else {
+			
+			//Stampo risultati
+			System.out.println("\n- Json # "+ jsonIndex);
+			System.out.println("	- # Test:		"+ testCount);
+			System.out.println("	- # Failure:		"+ failCount);
+			System.out.println("	- # Severe Failure:	"+ failSevereCount);
+			
+			jsonIndex++;
+			
+			failCount = 0;
+			failSevereCount = 0;
+			testCount = 0;
+			}
+			
+		}
 	}
 	
 

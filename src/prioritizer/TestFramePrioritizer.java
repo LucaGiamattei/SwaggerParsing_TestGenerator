@@ -1,5 +1,8 @@
 package prioritizer;
 
+import static org.fusesource.jansi.Ansi.ansi;
+import static org.fusesource.jansi.Ansi.Color.RED;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -229,7 +232,7 @@ public class TestFramePrioritizer {
 	        }
 	        myReader.close();
 	      } catch (Exception e) {
-	    	  System.out.println("[ERROR] GetWeightsFromFile: File read failed.");
+	    	  System.out.println("["+ansi().fgBright(RED).a("ERROR").reset()+"] GetWeightsFromFile: File read failed.");
 	      }
 	}
 	
@@ -255,7 +258,7 @@ public class TestFramePrioritizer {
 		      out.close();
 		      myWriter.close();
 	      } catch (Exception e) {
-	        System.out.println("[ERROR] File writing error..");
+	        System.out.println("["+ansi().fgBright(RED).a("ERROR").reset()+"] File writing error..");
 	        
 	      }
 	}

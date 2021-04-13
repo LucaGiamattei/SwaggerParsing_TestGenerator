@@ -1,7 +1,7 @@
 ********************* POSSIBLE CONFIGURATIONS
 **	
 **	jsonFile=<name of the file with json names for parsing>
-**	testMode=<normalmode,quickmode,pairwisemode>
+**	testMode=<normalmode,quickmode,pairwisemode,validmode,validmodeP,validinvalidmode,quickboundedmode>
 **	priorityMode=<allfailure,onlysevere>
 **	logMode=<log,nolog,token>
 **	
@@ -13,10 +13,12 @@
 **		token=<authentication token>
 **	
 **	OSS - when "**" is found the line is ignored
+**	    - don't leave empty lines
 **	    - the order of the parameter is important
 **
 **
 **
 jsonFile=JsonFilesFtgo.txt
-testMode=pairwisemode
+testMode=pairwisenvmode
+priorityMode=allfailure
 logMode=nolog

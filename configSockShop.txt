@@ -1,7 +1,7 @@
 ********************* POSSIBLE CONFIGURATIONS
 **	
 **	jsonFile=<name of the file with json names for parsing>
-**	testMode=<normalmode,quickmode,pairwisemode>
+**	testMode=<normalmode,quickmode,pairwisemode,validmode,validmodeP,validinvalidmode,quickboundedmode>
 **	priorityMode=<allfailure,onlysevere>
 **	logMode=<log,nolog,token>
 **	
@@ -18,8 +18,9 @@
 **
 **
 jsonFile=JsonFilesSockShop.txt
-testMode=normalmode
-logMode=log
-username=user
-password=password
-loginUrl=http://localhost:12340/api/v1/users/login
+testMode=pairwisenvmode
+priorityMode=allfailure
+logMode=nolog
+**username=user
+**password=password
+**loginUrl=http://localhost:12340/api/v1/users/login
